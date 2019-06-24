@@ -5,11 +5,12 @@ let ROOT
 // 环境的切换
 if (process.env.NODE_ENV === 'development') {
   // 开发环境下的代理地址，解决本地跨域跨域，配置在config目录下的index.js dev.proxyTable中
-  ROOT = '/api'
+  // ROOT = '/api'
+  ROOT = 'http://localhost/' // 本地调试用localhost
   // ROOT = 'http://mockjs.com'
 } else {
   // 生产环境下的地址
-  ROOT = '/MallService'
+  ROOT = 'http://183.6.114.219:23206'
 }
 
 const Axios = axios.create({
@@ -56,14 +57,14 @@ Axios.interceptors.request.use(
 Axios.interceptors.response.use(
   res => {
     // 对响应数据做些事
-    if (!res.data.Success) {
+    if (res.data.code !== 200) {
       Message({
         //  饿了么的消息弹窗组件,类似toast
         showClose: true,
-        message: res.data.ErrMsg,
+        message: res.data.message,
         type: 'error'
       })
-      return Promise.reject(res.data.ErrMsg) // 返回promise对象,把错误信息传下去
+      return Promise.reject(res.data.message) // 返回promise对象,把错误信息传下去
     }
     return res
   },

@@ -99,5 +99,43 @@ export default {
         this.hasSetRem(cb) // 递归扫描
       }, 300)
     }
+  },
+  /**
+   * 格式化人数为字符数组形式
+   * @param str 人数字符串 例如 '20.11'
+   */
+  str2StrArr (str) {
+    if (typeof str !== 'string') {
+      console.log(`str2StrArr: 参数必须为string类型: ${str}`)
+      return false
+    }
+    return str.split('.') // 去除 '.', 返回数组
+    // return str.split('')
+  },
+  /**
+   * 把数字转为万单位, 保留两位小数
+   * @param num
+   */
+  formatNum (num) {
+    if (typeof num !== 'number') {
+      console.log(`formatNum: 参数必须为number类型: ${num}`)
+      return false
+    }
+    if (num <= 0) {
+      console.log(`formatNum: 人数不能小于等于0: ${num}`)
+      return false
+    }
+    num = num / 10000 // 化为 万
+    num = num.toFixed(2) // 转为保留两位小数的string
+    return num
+  },
+  /**
+   * 统一处理  处理枢纽人数, 把数字转为字符串数组
+   * 返回字符串数组
+   */
+  getStrArr (num) {
+    let result = this.formatNum(num)
+    result = this.str2StrArr(result)
+    return result
   }
 }

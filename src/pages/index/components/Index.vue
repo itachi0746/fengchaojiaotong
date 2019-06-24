@@ -8,22 +8,18 @@
       <div class="main-box cd">
         <div class="the-bg bg-l" :style="{height: bgHeight}">
           <!--left-->
-          <div class="location-box cp">
-
-          </div>
+          <Location></Location>
           <div class="people-num-name">
             <i></i>
             <span>{{numFont}}</span>
           </div>
-          <div class="people-num">
+          <div class="people-num" v-if="numStrArr">
             <ul>
-              <li>5</li>
-              <li>5</li>
+              <li v-for="(item,index) in numStrArr[0].split('')" :key="index">{{item}}</li>
             </ul>
             <i></i>
             <ul>
-              <li>5</li>
-              <li>5</li>
+              <li v-for="(item,index) in numStrArr[1].split('')" :key="index">{{item}}</li>
             </ul>
             <span>万</span>
           </div>
@@ -41,13 +37,13 @@
           <!--right-->
           <div class="total-num-box">
             监测枢纽总数:
-            <i>128</i>
+            <i>{{totalHinge}}</i>
           </div>
           <div class="meter-box">
             <div class="meter meter-normal">
               <div>
                 <div class="meter-num">
-                  <i>100</i>
+                  <i>{{normalHinge}}</i>
                   个
                 </div>
                 <div class="meter-type">正常</div>
@@ -56,7 +52,7 @@
             <div class="meter meter-warning">
               <div>
                 <div class="meter-num">
-                  <i>28</i>
+                  <i>{{warningHinge}}</i>
                   个
                 </div>
                 <div class="meter-type">告警</div>
@@ -94,12 +90,15 @@ import Header from '../../../component/Header.vue'
 import ChartTitle from '../../../component/ChartTitle.vue'
 import HingeTable from '../../../component/HingeTable.vue'
 import AnalysisTable from '../../../component/AnalysisTable.vue'
-import { adcodes, theCitys } from '../../../common/mapData'
+import Location from '../../../component/Location.vue'
+import { theCitys } from '../../../common/mapData'
+import { postData } from '../../../common/server'
 
 export default {
   data () {
     return {
       numFont: '全部枢纽实时总人数',
+      peopleNum: null, // 人数
       defaultFeatures: ['bg', 'building', 'point'], // 地图默认特征
       roadFeatures: ['bg', 'building', 'point', 'road'], // 显示公路的 特征
       CTDataObj1: {hasLine: true, iconId: 1, font: '各行业人数分析'},
@@ -108,21 +107,30 @@ export default {
       CTDataObj4: {hasLine: true, iconId: 1, font: '枢纽人数排行'},
       chartL1: null,
       bgHeight: null, // 左右背景的高度
-
+      numStrArr: null, // 人数字符串数组
+      AreaFlowAndWarningList: null, // 区域实时总人数及该区域预警枢纽列表
+      totalHinge: null, // 总枢纽数
+      normalHinge: null, // 正常枢纽数
+      warningHinge: null, // 告警枢纽数
+      warningList: null, // 预警枢纽列表
     }
   },
   components: {
     Header,
     ChartTitle,
     HingeTable,
-    AnalysisTable
+    AnalysisTable,
+    Location
   },
   mounted () {
     window.echarts = echarts
     this.initMap()
     this.initDistrict()
-    this.renderMarkers()
+//    this.renderMarkers()
     utils.hasSetRem(this.initChart)
+  },
+  created () {
+    this.getAreaFlowAndWarningList()
   },
   methods: {
     /**
@@ -548,10 +556,10 @@ export default {
     },
     /**
      * 设置背景的高度
-     * @param height
+     * @param height 头部高度
      */
     getHeaderHeight (height) {
-      console.log(height)
+      console.log(`头部高度:${height}`)
       this.bgHeight = utils.getClientHeight() - height + 'px'
     },
     /**
@@ -569,6 +577,47 @@ export default {
         })
         theMap.add(marker)
       }
+    },
+    /**
+     * 获取区域实时总人数及该区域预警枢纽列表
+     */
+    getAreaFlowAndWarningList () {
+      const url = 'position/getAreaFlowAndWarningList?city=全部市'
+      const data = {}
+      postData(url, data).then((res) => {
+        console.log(res)
+        this.AreaFlowAndWarningList = res.data
+        this.handleFlowNum()
+        this.calHingeNum()
+      })
+    },
+    /**
+     * 处理枢纽人数, 把数字转为字符串数组
+     */
+    handleFlowNum () {
+      let theNum = this.AreaFlowAndWarningList.areaFlow.num
+      this.numStrArr = utils.getStrArr(theNum)
+    },
+    /**
+     * 计算枢纽数量
+     */
+    calHingeNum () {
+      const theArr = ['warningList_qd', 'warningList_ss', 'warningList_yz', 'warningList_zd']
+      let normalNum = 0
+      let totalNum = 0
+      for (let item of theArr) {
+        let len = this.AreaFlowAndWarningList[item].length
+        totalNum += len
+        if (item === 'warningList_ss') {
+          normalNum = len
+        }
+      }
+      this.totalHinge = totalNum
+      this.normalHinge = normalNum
+      this.warningHinge = totalNum - normalNum
+    },
+    calWarningList () {
+
     }
   },
   beforeDestroy () {
@@ -617,17 +666,6 @@ export default {
     position: relative;
     z-index: 1000;
     color: #ffffff;
-  }
-
-  .location-box {
-    position: absolute;
-    top: 26px * 1;
-    left: 11px;
-    /*margin: 26px 0 0 11px;*/
-    width: 285px;
-    height: 40px;
-    display: flex;
-    background: rgba(47, 165, 255, 0.5);
   }
 
   .shadow-inset {
@@ -679,6 +717,8 @@ export default {
     left: 23px;
     display: flex;
     align-items: flex-end;
+    font-family: unidreamledregular;
+    font-size: 45px;
     ul {
       display: flex;
     }
