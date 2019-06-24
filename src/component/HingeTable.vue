@@ -13,10 +13,10 @@
       <table id="table1" class="table">
         <tr :class="{alt: index%2===0}" v-for="(item,index) in tableData" :key="index">
           <td v-if="item.index">{{item.index}}</td>
-          <td>{{item.name}}</td>
-          <td>{{item.hinge}}</td>
-          <td>{{item.number}}</td>
-          <td>{{item.type}}</td>
+          <td>{{item.city}}</td>
+          <td>{{item.positionName}}</td>
+          <td>{{item.num}}</td>
+          <td>{{item.positionType}}</td>
         </tr>
       </table>
     </div>
@@ -27,64 +27,15 @@
 export default {
   data () {
     return {
-      tableData: [
-        {
-          //          index: 1,
-          name: '广州',
-          hinge: '广州南站',
-          number: '3万',
-          type: '重度'
-        },
-        {
-          //          index: 1,
-          name: '广州',
-          hinge: '广州南站',
-          number: '3万',
-          type: '重度'
-        },
-        {
-          //          index: 1,
-          name: '广州',
-          hinge: '广州南站',
-          number: '3万',
-          type: '重度'
-        },
-        {
-          //          index: 1,
-          name: '广州',
-          hinge: '广州南站',
-          number: '3万',
-          type: '重度'
-        },
-        {
-          //          index: 1,
-          name: '广州',
-          hinge: '广州南站',
-          number: '3万',
-          type: '重度'
-        },
-        {
-          //          index: 1,
-          name: '广州',
-          hinge: '广州南站',
-          number: '3万',
-          type: '重度'
-        },
-        {
-          //          index: 1,
-          name: '广州',
-          hinge: '广州南站',
-          number: '3万',
-          type: '重度'
-        },
-        {
-          //          index: 1,
-          name: '广州',
-          hinge: '广州南站',
-          number: '3万',
-          type: '重度'
-        },
-      ]
+//      tableData: []
+    }
+  },
+  props: {
+    tableData: {
+      type: Array,
+      default: () => {
+        return []
+      }
     }
   },
 

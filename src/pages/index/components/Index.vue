@@ -60,9 +60,9 @@
 
             </div>
           </div>
-          <div class="chart-r1-box">
+          <div class="chart-r1-box" v-if="warningList.length">
             <ChartTitle :CTData="CTDataObj3"></ChartTitle>
-            <HingeTable></HingeTable>
+            <HingeTable :tableData="warningList"></HingeTable>
           </div>
           <div class="chart-r2-box">
             <ChartTitle :CTData="CTDataObj4"></ChartTitle>
@@ -112,7 +112,7 @@ export default {
       totalHinge: null, // 总枢纽数
       normalHinge: null, // 正常枢纽数
       warningHinge: null, // 告警枢纽数
-      warningList: null, // 预警枢纽列表
+      warningList: [], // 预警枢纽列表
     }
   },
   components: {
@@ -589,6 +589,7 @@ export default {
         this.AreaFlowAndWarningList = res.data
         this.handleFlowNum()
         this.calHingeNum()
+        this.calWarningList()
       })
     },
     /**
@@ -616,8 +617,15 @@ export default {
       this.normalHinge = normalNum
       this.warningHinge = totalNum - normalNum
     },
+    /**
+     * 合并预警枢纽列表
+     */
     calWarningList () {
-
+      const theArr = ['warningList_yz', 'warningList_zd', 'warningList_qd', 'warningList_ss'] // 注意排序 从严重到舒适
+      debugger
+      for (let item of theArr) {
+        this.warningList = this.warningList.concat(this.AreaFlowAndWarningList[item])
+      }
     }
   },
   beforeDestroy () {
