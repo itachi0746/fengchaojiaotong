@@ -60,14 +60,13 @@
 
             </div>
           </div>
-          <div class="chart-r1-box" v-if="warningList.length">
+          <div class="chart-r1-box" v-if="AreaFlowAndWarningList">
             <ChartTitle :CTData="CTDataObj3"></ChartTitle>
-            <HingeTable :tableData="warningList"></HingeTable>
+            <HingeTable :tableData="AreaFlowAndWarningList"></HingeTable>
           </div>
           <div class="chart-r2-box">
             <ChartTitle :CTData="CTDataObj4"></ChartTitle>
-            <HingeTable></HingeTable>
-
+            <HingeRankingTable></HingeRankingTable>
           </div>
           <!--right-->
         </div>
@@ -89,6 +88,7 @@ import echarts from 'echarts'
 import Header from '../../../component/Header.vue'
 import ChartTitle from '../../../component/ChartTitle.vue'
 import HingeTable from '../../../component/HingeTable.vue'
+import HingeRankingTable from '../../../component/HingeRankingTable.vue'
 import AnalysisTable from '../../../component/AnalysisTable.vue'
 import Location from '../../../component/Location.vue'
 import { theCitys } from '../../../common/mapData'
@@ -112,7 +112,7 @@ export default {
       totalHinge: null, // 总枢纽数
       normalHinge: null, // 正常枢纽数
       warningHinge: null, // 告警枢纽数
-      warningList: [], // 预警枢纽列表
+
     }
   },
   components: {
@@ -120,17 +120,18 @@ export default {
     ChartTitle,
     HingeTable,
     AnalysisTable,
-    Location
+    Location,
+    HingeRankingTable
   },
   mounted () {
     window.echarts = echarts
     this.initMap()
     this.initDistrict()
-//    this.renderMarkers()
-    utils.hasSetRem(this.initChart)
+    this.renderMarkers()
   },
   created () {
     this.getAreaFlowAndWarningList()
+    this.getPositionTypeNum()
   },
   methods: {
     /**
@@ -483,13 +484,14 @@ export default {
     },
     /**
      * 初始化图表
+     * @param data 图表数据
      */
-    initChart () {
+    initChart (data) {
       this.chartL1 = echarts.init(this.$refs['chart-l1'])
       let option = {
         title: {
-          text: '某站点用户访问来源',
-          subtext: '纯属虚构',
+          text: '各行业人数分析',
+          subtext: '',
           x: 'center',
           show: false
         },
@@ -502,7 +504,7 @@ export default {
           orient: 'vertical',
           left: 'left',
           show: false,
-          data: ['直接访问', '邮件营销', '联盟广告', '视频广告', '搜索引擎']
+          data: ['客运站', '火车站', '机场', '服务区', '收费站']
         },
         series: [
           {
@@ -510,13 +512,14 @@ export default {
             type: 'pie',
             radius: ['20%', '60%'],
             center: ['50%', '60%'],
-            data: [
-              {value: 33.5, name: '客运站'},
-              {value: 31.0, name: '火车站'},
-              {value: 23.4, name: '机场'},
-              {value: 13.5, name: '服务区'},
-              {value: 15.48, name: '收费站'}
-            ],
+//            data: [
+//              {value: 33.5, name: '客运站'},
+//              {value: 31.0, name: '火车站'},
+//              {value: 23.4, name: '机场'},
+//              {value: 13.5, name: '服务区'},
+//              {value: 15.48, name: '收费站'}
+//            ],
+            data: data,
             itemStyle: {
               emphasis: {
                 shadowBlur: 10,
@@ -552,7 +555,6 @@ export default {
       }
       // 把配置和数据放这里
       this.chartL1.setOption(option)
-      //      this.chartL1.resize()
     },
     /**
      * 设置背景的高度
@@ -589,9 +591,24 @@ export default {
         this.AreaFlowAndWarningList = res.data
         this.handleFlowNum()
         this.calHingeNum()
-        this.calWarningList()
       })
     },
+    /**
+     * 获取各枢纽类型人数
+     */
+    getPositionTypeNum () {
+      const url = 'position/getPositionTypeNum?city=全部市'
+      const data = {}
+      postData(url, data).then((res) => {
+        console.log(res)
+        let theData = []
+        for (let obj of res.data) {
+          theData.push({value: obj.num, name: obj.positionType})
+        }
+        this.initChart(theData)
+      })
+    },
+
     /**
      * 处理枢纽人数, 把数字转为字符串数组
      */
@@ -616,16 +633,6 @@ export default {
       this.totalHinge = totalNum
       this.normalHinge = normalNum
       this.warningHinge = totalNum - normalNum
-    },
-    /**
-     * 合并预警枢纽列表
-     */
-    calWarningList () {
-      const theArr = ['warningList_yz', 'warningList_zd', 'warningList_qd', 'warningList_ss'] // 注意排序 从严重到舒适
-      debugger
-      for (let item of theArr) {
-        this.warningList = this.warningList.concat(this.AreaFlowAndWarningList[item])
-      }
     }
   },
   beforeDestroy () {
@@ -1021,4 +1028,5 @@ export default {
     display: none;
   }
   // 地点面板
+
 </style>

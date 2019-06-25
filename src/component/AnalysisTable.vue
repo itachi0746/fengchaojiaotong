@@ -5,45 +5,48 @@
       <div class="table-inner" ref="table-inner">
         <!--线背景-->
         <div class="line-bg" ref="line-bg">
-          <div class="line" v-for="(item,index) in lineNum" :key="index">
+          <div class="line" v-for="(item,index) in intervalNum" :key="index">
               <span>
-                <i>{{(maximum / lineNum) * (lineNum - index - 1)}}</i>
+                <i>{{parseInt((maximum / lineNum) * (lineNum - index))}}</i>
               </span>
           </div>
         </div>
         <div class="the-table">
           <div class="table-main" ref="table-main">
-            <ul>
-              <li :style="{height: tableLiHeight + 'px'}" v-for="item in 10" :key="item">
-                <div class="li-inner"></div>
-                <div class="li-name">广州</div>
+            <ul v-if="tableData.length">
+              <li :style="{height: tableLiHeight + 'px'}" v-for="(item,index) in tableData" :key="index">
+                <div class="li-inner" :style="{height: item.percent}"></div>
+                <div class="li-name">{{item.name}}</div>
               </li>
             </ul>
           </div>
         </div>
-
       </div>
-
     </div>
 
   </div>
 </template>
 
 <script>
-import { utils } from '../common'
+import { utils, postData } from '../common'
 
 export default {
   data () {
     return {
       maximum: 2000, // 表的纵坐标最大值
       lineNum: 10, // 背景线的数量
-      tableLiHeight: null // li的高度
+      tableLiHeight: null, // li的高度
+      tableData: [] // 表格的数据
     }
   },
 
   components: {},
 
-  computed: {},
+  computed: {
+    intervalNum () {
+      return this.lineNum + 1
+    }
+  },
 
   methods: {
     /**
@@ -54,13 +57,49 @@ export default {
       this.tableLiHeight = theHeight
 //      this.$refs['table-main'].style.height = theHeight + 'px'
 //      this.$refs['table-li'].style.height = theHeight + 'px'
+    },
+    /**
+     * 获取各区域人数
+     */
+    getAreaNum () {
+      const url = 'position/getAreaNum?city=全部市'
+      const data = {}
+      postData(url, data).then((res) => {
+        console.log(res)
+        let theList = res.data
+        let theMaxNum = 0 // 记录最大值
+        for (let obj of theList) { // 遍历 找出最大人数值
+          let objNum = obj.num
+          if (typeof objNum !== 'number') {
+            console.log(`人数类型错误: ${objNum}`)
+            return
+          }
+          theMaxNum = objNum > theMaxNum ? objNum : theMaxNum
+        }
+        this.maximum = this.handleMaxNum(theMaxNum)
+        for (let obj of theList) { // 遍历 编入表格数据
+          let thePercent = (obj.num / this.maximum * 100) + '%'
+          let theName = obj.city
+          this.tableData.push({name: theName, percent: thePercent})
+        }
+      })
+    },
+    /**
+     * 处理最大值
+     */
+    handleMaxNum (theMaxNum) {
+      let theNum = theMaxNum + 10000
+      theNum = parseInt(theNum / 10000) * 10000
+      return theNum
     }
   },
 
-  created () {},
+  created () {
+  },
 
   mounted () {
     utils.hasSetRem(this.setHeight)
+    this.getAreaNum()
   },
 
   beforeDestroy () {}
@@ -178,7 +217,7 @@ export default {
       background-color: #43bafe;
       border-radius: 7.5px;
       width: 100%;
-      height: 50%;
+      /*height: 50%;*/
       position: absolute;
       bottom: 0;
       left: 0;

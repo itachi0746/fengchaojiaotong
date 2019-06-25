@@ -19,7 +19,15 @@
         跨市迁徙分析
         <div class="sanjiao" v-if="activeId===3"></div>
       </div>
-      <div class="time-box"></div>
+      <div class="time-box">
+        <span>{{nowYear}}</span>
+        <span>年</span>
+        <span>{{nowMonth}}</span>
+        <span>月</span>
+        <span>{{nowDay}}</span>
+        <span>日</span>
+        <span>{{nowTime}}</span>
+      </div>
       <div class="right-box">
         <div class="right1">
           <div class="r-btn cp"></div>
@@ -38,7 +46,12 @@ import {utils} from '../common'
 export default {
   data () {
     return {
-      activeId: 1 // 当前页面的id
+      activeId: 1, // 当前页面的id
+      nowYear: null,
+      nowMonth: null,
+      nowDay: null,
+      nowTime: null,
+      timer: null
     }
   },
 
@@ -56,6 +69,16 @@ export default {
     sendHeight () {
       const headerHeight = this.$refs['header'].offsetHeight
       this.$emit('getHeaderHeight', headerHeight)
+    },
+    /**
+     * 处理时间
+     */
+    handleTime () {
+      let st = new Date()
+      this.nowYear = st.getFullYear()
+      this.nowMonth = st.getMonth() + 1
+      this.nowDay = st.getDate()
+      this.nowTime = st.getHours() + ' : ' + st.getMinutes()
     }
   },
 
@@ -63,9 +86,14 @@ export default {
 
   mounted () {
     utils.hasSetRem(this.sendHeight)
+    this.handleTime()
+    let me = this
+    this.timer = setInterval(me.handleTime, 1000)
   },
 
-  beforeDestroy () {}
+  beforeDestroy () {
+    clearTimeout(this.timer)
+  }
 }
 </script>
 
@@ -130,6 +158,14 @@ export default {
     background-size: contain;
     margin-left: 153px;
     margin-right: 53px;
+    color: #cde4ff;
+    font-size: 22px;
+    line-height: 39px;
+    text-align: center;
+    span:nth-child(2n+1) {
+      font-family: unidreamledregular;
+      font-size: 26px;
+    }
   }
   .right-box {
     width: 194px;
