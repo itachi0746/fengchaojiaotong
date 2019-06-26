@@ -116,14 +116,14 @@ export default {
    * 把数字转为万单位, 保留两位小数
    * @param num
    */
-  formatNum (num) {
+  num2Wan (num) {
     if (typeof num !== 'number') {
-      console.log(`formatNum: 参数必须为number类型: ${num}`)
+      console.log(`num2Wan: 参数必须为number类型: ${num}`)
       return false
     }
-    if (num <= 0) {
-      console.log(`formatNum: 人数不能小于等于0: ${num}`)
-      return false
+    if (num < 0) {
+      console.log(`num2Wan: 人数不能小于等于0: ${num}`)
+      return '空值'
     }
     num = num / 10000 // 化为 万
     num = num.toFixed(2) // 转为保留两位小数的string
@@ -134,7 +134,7 @@ export default {
    * 返回字符串数组
    */
   getStrArr (num) {
-    let result = this.formatNum(num)
+    let result = this.num2Wan(num)
     result = this.str2StrArr(result)
     return result
   }

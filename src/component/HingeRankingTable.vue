@@ -22,7 +22,7 @@
 </template>
 
 <script>
-import { postData } from '../common/server'
+import { postData } from '../common'
 
 export default {
   data () {

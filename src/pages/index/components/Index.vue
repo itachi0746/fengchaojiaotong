@@ -8,7 +8,7 @@
       <div class="main-box cd">
         <div class="the-bg bg-l" :style="{height: bgHeight}">
           <!--left-->
-          <Location></Location>
+          <Location @changeLocation="changeLocation"></Location>
           <div class="people-num-name">
             <i></i>
             <span>{{numFont}}</span>
@@ -83,7 +83,7 @@
 </template>
 
 <script>
-import { utils } from '../../../common'
+import { utils, postData } from '../../../common'
 import echarts from 'echarts'
 import Header from '../../../component/Header.vue'
 import ChartTitle from '../../../component/ChartTitle.vue'
@@ -91,8 +91,7 @@ import HingeTable from '../../../component/HingeTable.vue'
 import HingeRankingTable from '../../../component/HingeRankingTable.vue'
 import AnalysisTable from '../../../component/AnalysisTable.vue'
 import Location from '../../../component/Location.vue'
-import { theCitys } from '../../../common/mapData'
-import { postData } from '../../../common/server'
+import { theCitys, theCityData } from '../../../common/mapData'
 
 export default {
   data () {
@@ -112,7 +111,7 @@ export default {
       totalHinge: null, // 总枢纽数
       normalHinge: null, // 正常枢纽数
       warningHinge: null, // 告警枢纽数
-
+      curLocation: {name: '全部地市', adcode: ''} // 当前位置, 默认全部(广东省)
     }
   },
   components: {
@@ -127,7 +126,7 @@ export default {
     window.echarts = echarts
     this.initMap()
     this.initDistrict()
-    this.renderMarkers()
+    //    this.renderMarkers()
   },
   created () {
     this.getAreaFlowAndWarningList()
@@ -146,9 +145,9 @@ export default {
         viewMode: '3D', // 地图模式
         center: theCenterPoint,
         features: this.defaultFeatures,
-        //        zoom: 7.5,
+        zoom: 7.5,
         expandZoomRange: true, // 改变最大缩放等级
-        //        zooms: [7.5, 20], // 改变最大缩放等级
+        zooms: [7.5, 20], // 改变最大缩放等级
         keyboardEnable: false,
         layers: [
           //satellite,
@@ -230,9 +229,10 @@ export default {
 
         // feature被点击
         districtExplorer.on('featureClick', function (e, feature) {
-
           let props = feature.properties
-
+          console.log(props.adcode)
+          me.curLocation.name = props.name // 改变地点
+          me.curLocation.adcode = props.adcode // 改变地点
           // 如果存在子节点
           if (props.childrenNum > 0) {
             // 切换聚焦区域
@@ -243,7 +243,6 @@ export default {
         // 外部区域被点击
         districtExplorer.on('outsideClick', function (e) {
           districtExplorer.locatePosition(e.originalEvent.lnglat, function (error, routeFeatures) {
-
             if (routeFeatures && routeFeatures.length > 1) {
               // 切换到省级区域
               switch2AreaNode(routeFeatures[1].properties.adcode)
@@ -407,6 +406,8 @@ export default {
           })
         }
 
+        me.switch2AreaNode = switch2AreaNode
+
         // 加载区域
         function loadAreaNode (adcode, callback) {
 
@@ -424,7 +425,7 @@ export default {
             }
 
             renderAreaPanel(areaNode)
-
+            //            me.getAreaNode(areaNode)
             if (callback) {
               callback(null, areaNode)
             }
@@ -512,13 +513,13 @@ export default {
             type: 'pie',
             radius: ['20%', '60%'],
             center: ['50%', '60%'],
-//            data: [
-//              {value: 33.5, name: '客运站'},
-//              {value: 31.0, name: '火车站'},
-//              {value: 23.4, name: '机场'},
-//              {value: 13.5, name: '服务区'},
-//              {value: 15.48, name: '收费站'}
-//            ],
+            //            data: [
+            //              {value: 33.5, name: '客运站'},
+            //              {value: 31.0, name: '火车站'},
+            //              {value: 23.4, name: '机场'},
+            //              {value: 13.5, name: '服务区'},
+            //              {value: 15.48, name: '收费站'}
+            //            ],
             data: data,
             itemStyle: {
               emphasis: {
@@ -565,17 +566,67 @@ export default {
       this.bgHeight = utils.getClientHeight() - height + 'px'
     },
     /**
+     * 创建hover地图点的 dom
+     * @param dataObj 数据对象
+     */
+    createInfoDiv (dataObj) {
+      let thePoint = document.createElement('div')
+      let infoDiv = document.createElement('div')
+      let line1 = document.createElement('div')
+      let line2 = document.createElement('div')
+      let line3 = document.createElement('div')
+      let line4 = document.createElement('div')
+
+      thePoint.className = 'the-point'
+      infoDiv.className = 'info-div'
+      line1.innerHTML = dataObj.name
+      line2.innerHTML = `枢纽点总人数: ${utils.num2Wan(dataObj.totalNum)}万`
+      line3.innerHTML = `所有枢纽数: ${dataObj.totalHinge}个`
+      line4.innerHTML = `预警枢纽数: ${dataObj.warningHinge}个`
+      infoDiv.appendChild(line1)
+      infoDiv.appendChild(line2)
+      infoDiv.appendChild(line3)
+      infoDiv.appendChild(line4)
+      thePoint.appendChild(infoDiv)
+      thePoint.onclick = () => {
+        this.clickMarker(dataObj.name)
+      }
+      return thePoint
+    },
+    /**
+     * 点击地图点
+     * @param name 地点名字
+     */
+    clickMarker (name) {
+      const theName = name
+      let theObj = null
+      for (let obj of theCityData) {
+        if (theName === obj.name) {
+          theObj = {name: obj.name, adcode: obj.adcode}
+        }
+      }
+      if (!theObj) {
+        console.log('没有对应的地点')
+        return
+      }
+      this.curLocation = theObj
+      this.switch2AreaNode(this.curLocation.adcode)
+    },
+    /**
      * 画点
      */
     renderMarkers () {
-      for (let theCityName in theCitys) {
-        let thelngLat = theCitys[theCityName]
+      for (let obj of theCitys) {
+        //        let domStr = '<div class="the-point">' + '</div>'
+        let theDom = this.createInfoDiv(obj)
+        let thelngLat = obj.lnglat
         let thelngLats = thelngLat.split(',')
         let marker = new AMap.Marker({
           position: new AMap.LngLat(parseFloat(thelngLats[0]), parseFloat(thelngLats[1])), // 经纬度对象，也可以是经纬度构成的一维数组[116.39, 39.9]
-          title: theCityName,
-//          content: '<div style="color:white;width: 3em;font-size:10px;font-weight:bold;">' + theCityName + '</div>'
-          content: '<div class="the-point"></div>'
+          title: '',
+          //          title: obj.name,
+          //          content: '<div style="color:white;width: 3em;font-size:10px;font-weight:bold;">' + theCityName + '</div>'
+          content: theDom
         })
         theMap.add(marker)
       }
@@ -591,6 +642,8 @@ export default {
         this.AreaFlowAndWarningList = res.data
         this.handleFlowNum()
         this.calHingeNum()
+        this.calWarningList()
+        this.renderMarkers()
       })
     },
     /**
@@ -602,8 +655,13 @@ export default {
       postData(url, data).then((res) => {
         console.log(res)
         let theData = []
+        let totalNum = 0 // 总数
         for (let obj of res.data) {
-          theData.push({value: obj.num, name: obj.positionType})
+          totalNum += obj.num
+        }
+        for (let obj of res.data) {
+          let val = obj.num / totalNum * 100
+          theData.push({value: val, name: obj.positionType})
         }
         this.initChart(theData)
       })
@@ -633,7 +691,54 @@ export default {
       this.totalHinge = totalNum
       this.normalHinge = normalNum
       this.warningHinge = totalNum - normalNum
-    }
+    },
+    /**
+     * 计算各个城市的 总人数 总枢纽数 预警的枢纽数
+     */
+    calWarningList () {
+      for (let cityObj of theCitys) {
+        cityObj['totalNum'] = 0 // 总人数
+        cityObj['totalHinge'] = 0 // 总枢纽数
+        cityObj['warningHinge'] = 0 // 预警枢纽数
+      }
+      const theKeyArr = ['warningList_qd', 'warningList_ss', 'warningList_yz', 'warningList_zd']
+
+      for (let item of theKeyArr) {
+        let theArr = this.AreaFlowAndWarningList[item]
+        for (let obj of theArr) {
+          for (let cityObj of theCitys) {
+            if (obj.city === cityObj.name) { // 相等才进行操作
+              cityObj['totalNum'] += obj.num // 人数
+              cityObj['totalHinge']++ // 枢纽数
+              if (item !== 'warningList_ss') {
+                cityObj['warningHinge']++ // 预警的枢纽数
+              }
+            }
+          }
+        }
+      }
+    },
+    /**
+     * 改变地点
+     * @param posObj 位置对象 {name: '', adcode: ''}
+     */
+    changeLocation (posObj) {
+      console.log(posObj)
+      this.curLocation = posObj
+      this.switch2AreaNode(this.curLocation.adcode)
+    },
+    getAreaNode (areaNode) {
+      //      console.log(areaNode)
+      var temp1 = areaNode._data.geoData.sub.features
+      let arr = []
+      for (var i = 0; i < temp1.length; i++) {
+        arr.push({
+          name: temp1[i]['properties']['name'],
+          adcode: temp1[i]['properties']['adcode']
+        })
+      }
+      console.log(JSON.stringify(arr))
+    },
   },
   beforeDestroy () {
     if (!this.chartL1) {
@@ -1027,6 +1132,7 @@ export default {
   .hide-sub > ul {
     display: none;
   }
+
   // 地点面板
 
 </style>

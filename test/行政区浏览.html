@@ -22,6 +22,18 @@
 <!-- UI组件库 1.0 -->
 <script src="//webapi.amap.com/ui/1.0/main.js?v=1.0.11"></script>
 <script type="text/javascript">
+function getAreaNode (areaNode) {
+        console.log(areaNode)
+  var temp1 = areaNode._data.geoData.sub.features
+  let arr = []
+  for (var i = 0; i < temp1.length; i++) {
+    arr.push({
+      name: temp1[i]['properties']['name'],
+      adcode: temp1[i]['properties']['adcode']
+    })
+  }
+  console.log(JSON.stringify(arr))
+}
 //创建地图
 var map = new AMap.Map('container', {
   zoom: 4
@@ -308,7 +320,7 @@ AMapUI.load(['ui/geo/DistrictExplorer', 'lib/$'], function(DistrictExplorer, $) 
       }
 
       renderAreaPanel(areaNode);
-
+      getAreaNode(areaNode)
       if (callback) {
         callback(null, areaNode);
       }

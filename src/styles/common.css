@@ -34,6 +34,22 @@ html,body,#app {
   background: radial-gradient(red 1%, rgba(255,255,0,0.6) 60%, rgba(114,224,118,0.5) 90%); /* 标准的语法（必须放在最后） */
 
 }
+.info-div {
+  width: 150px;
+  padding: 10px;
+  font-size: 15px;
+  color: #fff;
+  position: absolute;
+  left: -50px;
+  top: -120px;
+  display: none;
+  transition: all .3s;
+  border: 1px solid #278bdb;
+  background-color: rgba(47, 165, 255, 0.5);
+}
+.the-point:hover .info-div {
+  display: block;
+}
 /*渐变圆*/
 .grad {
   height: 25px;
@@ -48,3 +64,4 @@ html,body,#app {
   background: -moz-radial-gradient(red 1%, rgba(255,255,0,0.6) 60%, rgba(114,224,118,0.5) 90%); /* Firefox 3.6 - 15 */
   background: radial-gradient(red 1%, rgba(255,255,0,0.6) 60%, rgba(114,224,118,0.5) 90%); /* 标准的语法（必须放在最后） */
 }
+
