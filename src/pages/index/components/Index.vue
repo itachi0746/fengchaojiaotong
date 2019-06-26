@@ -60,9 +60,9 @@
 
             </div>
           </div>
-          <div class="chart-r1-box" v-if="AreaFlowAndWarningList">
+          <div class="chart-r1-box" v-if="resData">
             <ChartTitle :CTData="CTDataObj3"></ChartTitle>
-            <HingeTable :tableData="AreaFlowAndWarningList"></HingeTable>
+            <HingeTable :tableData="resData"></HingeTable>
           </div>
           <div class="chart-r2-box">
             <ChartTitle :CTData="CTDataObj4"></ChartTitle>
@@ -107,11 +107,13 @@ export default {
       chartL1: null,
       bgHeight: null, // 左右背景的高度
       numStrArr: null, // 人数字符串数组
-      AreaFlowAndWarningList: null, // 区域实时总人数及该区域预警枢纽列表
+      resData: null, // 区域实时总人数及该区域预警枢纽列表(接口返回的数据)
       totalHinge: null, // 总枢纽数
       normalHinge: null, // 正常枢纽数
       warningHinge: null, // 告警枢纽数
-      curLocation: {name: '全部地市', adcode: ''} // 当前位置, 默认全部(广东省)
+      curLocation: {name: '全部地市', adcode: ''}, // 当前位置, 默认全部(广东省)
+      markers: [], // 存放地图标记点
+      warningList: [] // 处理后的枢纽预警列表
     }
   },
   components: {
@@ -133,30 +135,6 @@ export default {
     this.getPositionTypeNum()
   },
   methods: {
-    /**
-     * 初始化地图
-     */
-    initMap () {
-      const theDefaultMapStyle = 'amap://styles/785cdb67af60cfce35e24e8d6c56ed75' // 默认地图样式
-      const theCenterPoint = [113.275824, 22.994826] // 默认地图中心
-      let theMap = new AMap.Map('container', {
-        pitch: 45,
-        mapStyle: theDefaultMapStyle,
-        viewMode: '3D', // 地图模式
-        center: theCenterPoint,
-        features: this.defaultFeatures,
-        zoom: 7.5,
-        expandZoomRange: true, // 改变最大缩放等级
-        zooms: [7.5, 20], // 改变最大缩放等级
-        keyboardEnable: false,
-        layers: [
-          //satellite,
-          // building,
-          //roadNet
-        ]
-      })
-      window.theMap = theMap
-    },
     /**
      * 初始化行政区
      */
@@ -242,18 +220,18 @@ export default {
 
         // 外部区域被点击
         districtExplorer.on('outsideClick', function (e) {
-          districtExplorer.locatePosition(e.originalEvent.lnglat, function (error, routeFeatures) {
-            if (routeFeatures && routeFeatures.length > 1) {
-              // 切换到省级区域
-              switch2AreaNode(routeFeatures[1].properties.adcode)
-            } else {
-              // 切换到全国
-              switch2AreaNode(100000)
-            }
-
-          }, {
-            levelLimit: 2
-          })
+//          districtExplorer.locatePosition(e.originalEvent.lnglat, function (error, routeFeatures) {
+//            if (routeFeatures && routeFeatures.length > 1) {
+//              // 切换到省级区域
+//              switch2AreaNode(routeFeatures[1].properties.adcode)
+//            } else {
+//              // 切换到全国
+//              switch2AreaNode(100000)
+//            }
+//
+//          }, {
+//            levelLimit: 2
+//          })
         })
 
         // 绘制区域面板的节点
@@ -406,7 +384,11 @@ export default {
           })
         }
 
-        me.switch2AreaNode = switch2AreaNode
+//        me.switch2AreaNode = switch2AreaNode
+        me.switch2AreaNode = function (adcode) {
+          switch2AreaNode(adcode)
+          me.switchCB()
+        }
 
         // 加载区域
         function loadAreaNode (adcode, callback) {
@@ -482,6 +464,30 @@ export default {
         switch2AreaNode(440000)
         //        switch2AreaNode(100000)
       })
+    },
+    /**
+     * 初始化地图
+     */
+    initMap () {
+      const theDefaultMapStyle = 'amap://styles/785cdb67af60cfce35e24e8d6c56ed75' // 默认地图样式
+      const theCenterPoint = [113.275824, 22.994826] // 默认地图中心
+      let theMap = new AMap.Map('container', {
+        pitch: 45,
+        mapStyle: theDefaultMapStyle,
+        viewMode: '3D', // 地图模式
+        center: theCenterPoint,
+        features: this.defaultFeatures,
+        zoom: 7.5,
+        expandZoomRange: true, // 改变最大缩放等级
+        zooms: [7.5, 20], // 改变最大缩放等级
+        keyboardEnable: false,
+        layers: [
+          //satellite,
+          // building,
+          //roadNet
+        ]
+      })
+      window.theMap = theMap
     },
     /**
      * 初始化图表
@@ -628,8 +634,31 @@ export default {
           //          content: '<div style="color:white;width: 3em;font-size:10px;font-weight:bold;">' + theCityName + '</div>'
           content: theDom
         })
+        this.markers.push(marker)
         theMap.add(marker)
       }
+    },
+    /**
+     * 隐藏markers
+     */
+    hideMarkers () {
+      for (let m of this.markers) {
+        m.hide()
+      }
+    },
+    /**
+     * 显示markers
+     */
+    showMarkers () {
+      for (let m of this.markers) {
+        m.show()
+      }
+    },
+    /**
+     * 删除markers
+     */
+    removeMarkers () {
+      theMap.remove(this.markers)
     },
     /**
      * 获取区域实时总人数及该区域预警枢纽列表
@@ -639,7 +668,7 @@ export default {
       const data = {}
       postData(url, data).then((res) => {
         console.log(res)
-        this.AreaFlowAndWarningList = res.data
+        this.resData = res.data
         this.handleFlowNum()
         this.calHingeNum()
         this.calWarningList()
@@ -671,7 +700,7 @@ export default {
      * 处理枢纽人数, 把数字转为字符串数组
      */
     handleFlowNum () {
-      let theNum = this.AreaFlowAndWarningList.areaFlow.num
+      let theNum = this.resData.areaFlow.num
       this.numStrArr = utils.getStrArr(theNum)
     },
     /**
@@ -682,7 +711,8 @@ export default {
       let normalNum = 0
       let totalNum = 0
       for (let item of theArr) {
-        let len = this.AreaFlowAndWarningList[item].length
+        this.warningList = this.warningList.concat(this.resData[item])
+        let len = this.resData[item].length
         totalNum += len
         if (item === 'warningList_ss') {
           normalNum = len
@@ -704,7 +734,7 @@ export default {
       const theKeyArr = ['warningList_qd', 'warningList_ss', 'warningList_yz', 'warningList_zd']
 
       for (let item of theKeyArr) {
-        let theArr = this.AreaFlowAndWarningList[item]
+        let theArr = this.resData[item]
         for (let obj of theArr) {
           for (let cityObj of theCitys) {
             if (obj.city === cityObj.name) { // 相等才进行操作
@@ -726,6 +756,12 @@ export default {
       console.log(posObj)
       this.curLocation = posObj
       this.switch2AreaNode(this.curLocation.adcode)
+    },
+    /**
+     * 切换地点后的回调
+     */
+    switchCB () {
+      this.hideMarkers()
     },
     getAreaNode (areaNode) {
       //      console.log(areaNode)
