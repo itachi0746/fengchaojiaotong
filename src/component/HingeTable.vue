@@ -49,6 +49,12 @@ export default {
       }
     }
   },
+  watch: {
+    tableData (newVal, oldVal) {
+      this.activeId = 0
+      this.calWarningList()
+    }
+  },
 
   components: {},
 
@@ -158,7 +164,7 @@ export default {
     padding-right: 0;
   }
   .table tr.alt td {
-    background-color: rgba(1,43,91,0.5);
+    background-color: rgba(12,27,60,0.5);
   }
   .table-box {
     padding-right: 36px;

@@ -378,6 +378,25 @@ AMapUI.load(['ui/geo/DistrictExplorer', 'lib/$'], function(DistrictExplorer, $) 
   switch2AreaNode(100000);
 });
 </script>
+<script>
+var arr = []
+var have;
+for(var i=0;i<temp1.length;i++){
+  var item = temp1[i]
+  var name = item.positionName
+  have = false
+  for (let obj of a) {
+    var bname = obj['枢纽名称']
+    if (bname === name) {
+      have = true
+      break
+    }
+  }
+  if (!have) {
+    arr.push(name)
+  }
+}
+</script>
 </body>
 
 </html>

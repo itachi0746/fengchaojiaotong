@@ -42,6 +42,15 @@ export default {
     }
   },
   props: {
+    curLocation: {
+      type: Object,
+      default: null
+    }
+  },
+  watch: {
+    curLocation (newVal, oldVal) {
+      this.getPositionNum()
+    }
   },
 
   components: {},
@@ -53,9 +62,11 @@ export default {
      * 获取枢纽人数排行列表
      */
     getPositionNum () {
-      const url = 'position/getPositionNum?city=全部市&positionType=全部'
+      const theName = this.curLocation.name
+      const url = `position/getPositionNum?city=${theName}&positionType=全部`
       const data = {}
       postData(url, data).then((res) => {
+        this.numRankList = []
         console.log(res)
         let len = res.data.length
         this.theList = res.data
@@ -179,7 +190,7 @@ export default {
     padding-right: 0;
   }
   .table tr.alt td {
-    background-color: rgba(1,43,91,0.5);
+    background-color: rgba(12,27,60,0.5);
   }
   .table-box {
     padding-right: 36px;

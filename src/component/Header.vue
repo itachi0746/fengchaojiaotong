@@ -78,7 +78,7 @@ export default {
       this.nowYear = st.getFullYear()
       this.nowMonth = st.getMonth() + 1
       this.nowDay = st.getDate()
-      this.nowTime = st.getHours() + ' : ' + st.getMinutes()
+      this.nowTime = utils.add0(st.getHours()) + ' : ' + utils.add0(st.getMinutes())
     }
   },
 
@@ -144,6 +144,7 @@ export default {
   .tab.active {
     background: url("../assert/顶部导航栏选中框.png.png") no-repeat;
     background-size: contain;
+    color: #ffffff;
   }
   .tab-line {
     width: 10px;

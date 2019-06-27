@@ -3,7 +3,7 @@
 import Vue from 'vue'
 import App from './App'
 import router from './router'
-import { Button, Row, Progress } from 'element-ui'
+import { Button, Row, Progress, Switch } from 'element-ui'
 import '@/common/rem.js'
 import '@/styles/reset.css'
 import '@/styles/common.css'
@@ -14,6 +14,7 @@ Vue.use(axiosPlugin)
 Vue.use(Button)
 Vue.use(Row)
 Vue.use(Progress)
+Vue.use(Switch)
 Vue.config.productionTip = false
 
 /* eslint-disable no-new */

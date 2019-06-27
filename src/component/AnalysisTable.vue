@@ -39,7 +39,6 @@ export default {
       tableData: [] // 表格的数据
     }
   },
-
   components: {},
 
   computed: {

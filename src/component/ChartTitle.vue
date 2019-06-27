@@ -65,6 +65,7 @@ export default {
     color: #f5f6f6;
     font-size: 18px;
     justify-content: center;
+    background-color: rgba(12,27,60,0.5);
   }
 
   .border-rectangle {

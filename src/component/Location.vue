@@ -2,7 +2,7 @@
   <!--地点选择组件-->
   <div class="location-box cp" @click.stop="clickBox">
     <img class="img1" src="../assert/内容区_地市选择icon.png" alt="">
-    <span class="location-name">{{curLocation.name}}</span>
+    <span class="location-name">{{theLocation.name}}</span>
     <img class="img2" src="../assert/内容区_地市选择下拉icon.png" alt="">
     <div class="loc-list" v-if="showList">
       <ul>
@@ -20,12 +20,19 @@ export default {
     return {
       showList: false, // 显示列表的开关
       posList: null, // 地点列表
-      curLocation: {name: '全部地市', adcode: ''},
+//      curLocation: {name: '全部市', adcode: 440000},
+      theLocation: null,
       resData: null // 请求返回的数据
     }
   },
 
   components: {},
+  props: {
+    curLocation: {
+      type: Object,
+      default: null
+    }
+  },
 
   computed: {},
 
@@ -50,13 +57,14 @@ export default {
      * @param adcode 行政号
      */
     clickLi (name, adcode) {
-      this.curLocation = {name: name, adcode: adcode}
+      this.theLocation = {name: name, adcode: adcode}
       this.showList = false
-      this.$emit('changeLocation', this.curLocation)
+      this.$emit('changeLocation', this.theLocation)
     }
   },
 
   created () {
+    this.theLocation = this.curLocation
     this.getData()
   },
 

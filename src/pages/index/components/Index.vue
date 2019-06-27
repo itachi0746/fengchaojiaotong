@@ -8,24 +8,12 @@
       <div class="main-box cd">
         <div class="the-bg bg-l" :style="{height: bgHeight}">
           <!--left-->
-          <Location @changeLocation="changeLocation"></Location>
-          <div class="people-num-name">
-            <i></i>
-            <span>{{numFont}}</span>
-          </div>
-          <div class="people-num" v-if="numStrArr">
-            <ul>
-              <li v-for="(item,index) in numStrArr[0].split('')" :key="index">{{item}}</li>
-            </ul>
-            <i></i>
-            <ul>
-              <li v-for="(item,index) in numStrArr[1].split('')" :key="index">{{item}}</li>
-            </ul>
-            <span>万</span>
-          </div>
+          <Location @changeLocation="changeLocation" :curLocation="curLocation"></Location>
+          <PeopleNum v-if="resData" :areaFlowNum="resData.areaFlow.num"></PeopleNum>
           <div class="chart-l1-box">
             <ChartTitle :CTData="CTDataObj1"></ChartTitle>
-            <div class="chart-l1" ref="chart-l1"></div>
+            <div class="chart-l1" ref="chart-l1" v-if="showChartL1"></div>
+            <AnalysisTable2 v-if="!showChartL1" :curCity="curLocation.name"></AnalysisTable2>
           </div>
           <div class="chart-l2-box">
             <ChartTitle :CTData="CTDataObj2"></ChartTitle>
@@ -35,9 +23,12 @@
         </div>
         <div class="the-bg bg-r" :style="{height: bgHeight}">
           <!--right-->
+          <div class="return-btn" v-if="showReturnBtn" @click="clickReturnBtn">
+            <img src="../assets/返回icon.png" alt="">
+            <span>返回</span>
+          </div>
           <div class="total-num-box">
-            监测枢纽总数:
-            <i>{{totalHinge}}</i>
+            监测枢纽总数: <i>{{totalHinge}}</i>
           </div>
           <div class="meter-box">
             <div class="meter meter-normal">
@@ -66,7 +57,7 @@
           </div>
           <div class="chart-r2-box">
             <ChartTitle :CTData="CTDataObj4"></ChartTitle>
-            <HingeRankingTable></HingeRankingTable>
+            <HingeRankingTable :curLocation="curLocation"></HingeRankingTable>
           </div>
           <!--right-->
         </div>
@@ -76,8 +67,9 @@
       <!--<ul id="area-tree">-->
       <!--</ul>-->
       <!--</div>-->
-
       <!--</div>-->
+      <!--底部-->
+      <BtmTab v-if="showBtm"></BtmTab>
     </div>
   </div>
 </template>
@@ -90,14 +82,16 @@ import ChartTitle from '../../../component/ChartTitle.vue'
 import HingeTable from '../../../component/HingeTable.vue'
 import HingeRankingTable from '../../../component/HingeRankingTable.vue'
 import AnalysisTable from '../../../component/AnalysisTable.vue'
+import AnalysisTable2 from '../../../component/AnalysisTable2.vue'
 import Location from '../../../component/Location.vue'
+import BtmTab from '../../../component/BtmTab.vue'
+import PeopleNum from '../../../component/PeopleNum.vue'
 import { theCitys, theCityData } from '../../../common/mapData'
+import PlacePointView from '../../../common/data'
 
 export default {
   data () {
     return {
-      numFont: '全部枢纽实时总人数',
-      peopleNum: null, // 人数
       defaultFeatures: ['bg', 'building', 'point'], // 地图默认特征
       roadFeatures: ['bg', 'building', 'point', 'road'], // 显示公路的 特征
       CTDataObj1: {hasLine: true, iconId: 1, font: '各行业人数分析'},
@@ -106,14 +100,17 @@ export default {
       CTDataObj4: {hasLine: true, iconId: 1, font: '枢纽人数排行'},
       chartL1: null,
       bgHeight: null, // 左右背景的高度
-      numStrArr: null, // 人数字符串数组
       resData: null, // 区域实时总人数及该区域预警枢纽列表(接口返回的数据)
       totalHinge: null, // 总枢纽数
       normalHinge: null, // 正常枢纽数
       warningHinge: null, // 告警枢纽数
-      curLocation: {name: '全部地市', adcode: ''}, // 当前位置, 默认全部(广东省)
-      markers: [], // 存放地图标记点
-      warningList: [] // 处理后的枢纽预警列表
+      curLocation: {name: '全部市', adcode: 440000}, // 当前位置, 默认全部(广东省)
+      preLocation: null, // 记录上一个位置
+      cityMarkers: [], // 存放地图标记点
+      warningList: [], // 处理后的枢纽预警列表
+      showReturnBtn: false, // 返回按钮显示开关
+      showBtm: false, // 显示底部开关
+      showChartL1: true, // 省界面 各行业人数分析表 显示开关
     }
   },
   components: {
@@ -122,13 +119,48 @@ export default {
     HingeTable,
     AnalysisTable,
     Location,
-    HingeRankingTable
+    HingeRankingTable,
+    BtmTab,
+    AnalysisTable2,
+    PeopleNum
+  },
+  computed: {
+    mapStatus () { // 地图状态 1代表省(默认) 2代表市 3代表区 跟随curLocation改变而改变
+      const adcode = this.curLocation.adcode
+      if (!adcode) { // 枢纽
+        return 3
+      } else if (adcode !== 440000) { // 地市
+        return 2
+      } else { // 广东省
+        return 1
+      }
+    }
+  },
+  watch: {
+    curLocation (newVal, oldVal) {
+      console.log(`上一个位置： ${oldVal.name}, 当前位置： ${newVal.name}`)
+      this.preLocation = oldVal
+      const status = this.mapStatus
+      if (status === 1) { // 省
+        this.showCityMarkers()
+        this.showBtm = false
+        this.showReturnBtn = false
+        this.showChartL1 = true
+        this.getPositionTypeNum()
+      } else if (status === 2) { // 地市
+        this.hideCityMarkers()
+        this.showBtm = true
+        this.showReturnBtn = true
+        this.showChartL1 = false
+      }
+      this.switch2AreaNode(newVal.adcode)
+      this.getAreaFlowAndWarningList()
+    }
   },
   mounted () {
     window.echarts = echarts
     this.initMap()
     this.initDistrict()
-    //    this.renderMarkers()
   },
   created () {
     this.getAreaFlowAndWarningList()
@@ -207,15 +239,15 @@ export default {
 
         // feature被点击
         districtExplorer.on('featureClick', function (e, feature) {
-          let props = feature.properties
-          console.log(props.adcode)
-          me.curLocation.name = props.name // 改变地点
-          me.curLocation.adcode = props.adcode // 改变地点
-          // 如果存在子节点
-          if (props.childrenNum > 0) {
-            // 切换聚焦区域
-            switch2AreaNode(props.adcode)
-          }
+//          let props = feature.properties
+//          console.log(props.adcode)
+//          me.curLocation.name = props.name // 改变地点
+//          me.curLocation.adcode = props.adcode // 改变地点
+//          // 如果存在子节点
+//          if (props.childrenNum > 0) {
+//            // 切换聚焦区域
+//            switch2AreaNode(props.adcode)
+//          }
         })
 
         // 外部区域被点击
@@ -387,7 +419,7 @@ export default {
 //        me.switch2AreaNode = switch2AreaNode
         me.switch2AreaNode = function (adcode) {
           switch2AreaNode(adcode)
-          me.switchCB()
+//          me.switchCB()
         }
 
         // 加载区域
@@ -488,6 +520,7 @@ export default {
         ]
       })
       window.theMap = theMap
+      window.pointControl = new PlacePointView(window.theMap)
     },
     /**
      * 初始化图表
@@ -616,70 +649,79 @@ export default {
         return
       }
       this.curLocation = theObj
-      this.switch2AreaNode(this.curLocation.adcode)
     },
     /**
      * 画点
      */
-    renderMarkers () {
+    renderCityMarkers () {
+      if (this.cityMarkers) { // 清空
+        this.removeCityMarkers()
+      }
       for (let obj of theCitys) {
-        //        let domStr = '<div class="the-point">' + '</div>'
         let theDom = this.createInfoDiv(obj)
         let thelngLat = obj.lnglat
         let thelngLats = thelngLat.split(',')
         let marker = new AMap.Marker({
           position: new AMap.LngLat(parseFloat(thelngLats[0]), parseFloat(thelngLats[1])), // 经纬度对象，也可以是经纬度构成的一维数组[116.39, 39.9]
           title: '',
-          //          title: obj.name,
           //          content: '<div style="color:white;width: 3em;font-size:10px;font-weight:bold;">' + theCityName + '</div>'
           content: theDom
         })
-        this.markers.push(marker)
+        this.cityMarkers.push(marker)
         theMap.add(marker)
       }
     },
     /**
      * 隐藏markers
      */
-    hideMarkers () {
-      for (let m of this.markers) {
+    hideCityMarkers () {
+      for (let m of this.cityMarkers) {
         m.hide()
       }
     },
     /**
      * 显示markers
      */
-    showMarkers () {
-      for (let m of this.markers) {
+    showCityMarkers () {
+      for (let m of this.cityMarkers) {
         m.show()
       }
     },
     /**
      * 删除markers
      */
-    removeMarkers () {
-      theMap.remove(this.markers)
+    removeCityMarkers () {
+      theMap.remove(this.cityMarkers)
     },
     /**
      * 获取区域实时总人数及该区域预警枢纽列表
      */
     getAreaFlowAndWarningList () {
-      const url = 'position/getAreaFlowAndWarningList?city=全部市'
+      const theName = this.curLocation.name
+      const url = 'position/getAreaFlowAndWarningList?city=' + theName
       const data = {}
       postData(url, data).then((res) => {
         console.log(res)
+        if (!res.data) {
+          console.log('getAreaFlowAndWarningList: 没有数据')
+          return
+        }
         this.resData = res.data
-        this.handleFlowNum()
         this.calHingeNum()
         this.calWarningList()
-        this.renderMarkers()
+        const status = this.mapStatus
+        if (status === 1) {
+          this.renderCityMarkers()
+        } else if (status === 2) { // todo
+        }
       })
     },
     /**
      * 获取各枢纽类型人数
      */
     getPositionTypeNum () {
-      const url = 'position/getPositionTypeNum?city=全部市'
+      const theName = this.curLocation.name
+      const url = 'position/getPositionTypeNum?city=' + theName
       const data = {}
       postData(url, data).then((res) => {
         console.log(res)
@@ -694,14 +736,6 @@ export default {
         }
         this.initChart(theData)
       })
-    },
-
-    /**
-     * 处理枢纽人数, 把数字转为字符串数组
-     */
-    handleFlowNum () {
-      let theNum = this.resData.areaFlow.num
-      this.numStrArr = utils.getStrArr(theNum)
     },
     /**
      * 计算枢纽数量
@@ -750,18 +784,25 @@ export default {
     },
     /**
      * 改变地点
-     * @param posObj 位置对象 {name: '', adcode: ''}
+     * @param posObj 位置对象 {name: string, adcode: number}
      */
     changeLocation (posObj) {
       console.log(posObj)
       this.curLocation = posObj
-      this.switch2AreaNode(this.curLocation.adcode)
     },
     /**
      * 切换地点后的回调
      */
     switchCB () {
-      this.hideMarkers()
+      this.hideCityMarkers()
+      this.showReturnBtn = true
+    },
+    /**
+     * 点击返回按钮
+     */
+    clickReturnBtn () {
+//      console.log(this.mapStatus)
+      this.curLocation = this.preLocation
     },
     getAreaNode (areaNode) {
       //      console.log(areaNode)
@@ -831,9 +872,10 @@ export default {
 
   .the-bg {
     position: absolute;
-    width: 584px;
-    /*height: 998px;*/
+    /*width: 584px;*/
+    width: 554px;
     top: 0;
+    /*pointer-events: none;*/
   }
 
   .bg-l {
@@ -847,57 +889,6 @@ export default {
     background-size: 100% 100%;
     right: 0;
   }
-
-  .people-num-name {
-    font-size: 24px;
-    /*margin: 0 0 24px 21px;*/
-    position: absolute;
-    /*top: 101px;*/
-    top: 95px;
-    left: 21px;
-    display: flex;
-    align-items: center;
-    i {
-      width: 20px;
-      height: 21px;
-      background: url("../assets/内容区_枢纽总人数icon.png") no-repeat;
-      background-size: contain;
-      margin-right: 8px;
-    }
-  }
-
-  .people-num {
-    position: absolute;
-    /*top: 145px;*/
-    top: 140px;
-    left: 23px;
-    display: flex;
-    align-items: flex-end;
-    font-family: unidreamledregular;
-    font-size: 45px;
-    ul {
-      display: flex;
-    }
-    li {
-      width: 42px;
-      height: 57px;
-      background: url("../assets/内容区_总人数背景色.icon.png") no-repeat;
-      background-size: contain;
-      margin-right: 11px;
-      @include defaultFlex;
-    }
-    i {
-      height: 10px;
-      width: 6px;
-      background-color: #ffffff;
-      margin: 0 10px 10px 0;
-      margin-left: -5px;
-    }
-    span {
-      font-size: 24.5px;
-    }
-  }
-
   .chart-l1-box {
     width: 500px;
     /*height: 368px;*/
@@ -1169,6 +1160,21 @@ export default {
     display: none;
   }
 
-  // 地点面板
+.return-btn {
+  position: absolute;
+  top: 18px;
+  right: 13px;
+  width: 100px;
+  height: 40px;
+  color: #f0ffff;
+  font-size: 20px;
+  display: flex;
+  justify-content: space-around;
+  border-radius: 19px;
+  background-color: #2470c2;
+  align-items: center;
+  @include borderBox();
+  padding: 0 8px;
+}
 
 </style>
