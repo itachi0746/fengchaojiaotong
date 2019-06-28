@@ -1,7 +1,9 @@
 <template>
   <!--底部-->
   <div class="btm-box cd">
-    <div :class="['btm-tab', 'cp', {'active': activeId===index}]" v-for="(item,index) in dataObj" :key="index" @click="clickTab(index)">{{item.name}}</div>
+    <div :class="['btm-tab', 'cp', {'active': activeId===index}]" v-for="(item,index) in dataObj" :key="index"
+         @click="clickTab(index)">{{item.name}}
+    </div>
     <div class="switch-box">
       <el-switch
         v-model="value"
@@ -24,17 +26,22 @@ export default {
         {name: '服务区'},
         {name: '收费站'}
       ],
-      value: false
+      value: true // 显示枢纽名称开关
     }
   },
 
   components: {},
-
+  watch: {
+    value (newVal, oldVal) {
+      this.$emit('showHingeName', newVal)
+    }
+  },
   computed: {},
 
   methods: {
     clickTab (i) {
       this.activeId = i
+      this.$emit('changeHingePart', i)
     }
   },
 
@@ -61,6 +68,7 @@ export default {
     color: #88c3ff;
     font-size: 18px;
   }
+
   .btm-tab {
     width: 127px;
     height: 50px;
@@ -68,15 +76,18 @@ export default {
     background-size: 100% 100%;
     @include defaultFlex;
   }
+
   .btm-tab.active {
     background: url("../assert/底部导航栏_选中.png") no-repeat;
     background-size: 100% 100%;
     color: #e8eef0;
   }
+
   .switch-box {
     display: flex;
     align-items: center;
     position: relative;
     left: -10px;
+    color: #ffffff;
   }
 </style>

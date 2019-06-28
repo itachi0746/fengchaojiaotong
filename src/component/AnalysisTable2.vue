@@ -48,6 +48,7 @@ export default {
     getData (cityName) {
       const url = 'position/getPositionTypeNum?city=' + cityName
       const data = {}
+      this.list = []
       postData(url, data).then((res) => {
         console.log(res)
         let theList = res.data

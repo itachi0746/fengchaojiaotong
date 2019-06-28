@@ -17,7 +17,7 @@
           </div>
           <div class="chart-l2-box">
             <ChartTitle :CTData="CTDataObj2"></ChartTitle>
-            <AnalysisTable></AnalysisTable>
+            <AnalysisTable :curLocation="curLocation" :mapStatus="mapStatus"></AnalysisTable>
           </div>
           <!--left-->
         </div>
@@ -51,9 +51,9 @@
 
             </div>
           </div>
-          <div class="chart-r1-box" v-if="resData">
+          <div class="chart-r1-box">
             <ChartTitle :CTData="CTDataObj3"></ChartTitle>
-            <HingeTable :tableData="resData"></HingeTable>
+            <HingeTable  v-if="resData" :tableData="resData"></HingeTable>
           </div>
           <div class="chart-r2-box">
             <ChartTitle :CTData="CTDataObj4"></ChartTitle>
@@ -69,7 +69,7 @@
       <!--</div>-->
       <!--</div>-->
       <!--底部-->
-      <BtmTab v-if="showBtm"></BtmTab>
+      <BtmTab v-if="showBtm" @showHingeName="handleShowHingeName" @changeHingePart="changeShowHingeType"></BtmTab>
     </div>
   </div>
 </template>
@@ -106,11 +106,14 @@ export default {
       warningHinge: null, // 告警枢纽数
       curLocation: {name: '全部市', adcode: 440000}, // 当前位置, 默认全部(广东省)
       preLocation: null, // 记录上一个位置
-      cityMarkers: [], // 存放地图标记点
+      cityMarkers: [], // 存放地图标记点(城市)
+      hingeMarkers: [], // 存放地图标记点(枢纽)
       warningList: [], // 处理后的枢纽预警列表
       showReturnBtn: false, // 返回按钮显示开关
       showBtm: false, // 显示底部开关
       showChartL1: true, // 省界面 各行业人数分析表 显示开关
+      positionInfoList: [], // 枢纽数据列表 名称 id等
+      showHingeName: true // 显示枢纽点名称 开关
     }
   },
   components: {
@@ -138,17 +141,21 @@ export default {
   },
   watch: {
     curLocation (newVal, oldVal) {
-      console.log(`上一个位置： ${oldVal.name}, 当前位置： ${newVal.name}`)
+      console.log(`当前位置： ${newVal.name}`)
       this.preLocation = oldVal
       const status = this.mapStatus
+      window.mapStatus = this.mapStatus
       if (status === 1) { // 省
         this.showCityMarkers()
+        this.removeHingeMarkers()
         this.showBtm = false
         this.showReturnBtn = false
         this.showChartL1 = true
         this.getPositionTypeNum()
       } else if (status === 2) { // 地市
         this.hideCityMarkers()
+        this.removeHingeMarkers()
+        this.renderHingeMarkers(this.findCityHinge())
         this.showBtm = true
         this.showReturnBtn = true
         this.showChartL1 = false
@@ -165,6 +172,7 @@ export default {
   created () {
     this.getAreaFlowAndWarningList()
     this.getPositionTypeNum()
+    this.getPositionInfoList()
   },
   methods: {
     /**
@@ -331,8 +339,10 @@ export default {
         // 绘制某个区域的边界
         function renderAreaPolygons (areaNode) {
           // 更新地图视野
-          theMap.setBounds(areaNode.getBounds(), null, null, true)
-
+          window.theMap.setBounds(areaNode.getBounds(), null, null, true)
+          if (window.mapStatus === 2) {
+            window.theMap.setZoom(9.5) // todo 不同城市同一缩放级别有显示问题
+          }
           // 清除已有的绘制内容
           districtExplorer.clearFeaturePolygons()
 
@@ -605,7 +615,7 @@ export default {
       this.bgHeight = utils.getClientHeight() - height + 'px'
     },
     /**
-     * 创建hover地图点的 dom
+     * 创建hover地图点的 dom (城市)
      * @param dataObj 数据对象
      */
     createInfoDiv (dataObj) {
@@ -633,6 +643,43 @@ export default {
       return thePoint
     },
     /**
+     * 创建hover地图点的 dom (枢纽)
+     * @param dataObj 数据对象
+     */
+    createInfoDiv2 (dataObj) {
+      let imgObj = {
+        '轻度预警': require('../assets/枢纽点_轻度_正常.png'),
+        '中度预警': require('../assets/枢纽点_中度_正常.png'),
+        '重度预警': require('../assets/枢纽点_重度_正常.png'),
+        '舒适': ''
+      }
+      let thePoint = document.createElement('div')
+      let infoDiv = document.createElement('div')
+      let hoverDiv = document.createElement('div')
+      let line1 = document.createElement('div')
+      let line2 = document.createElement('div')
+      let line3 = document.createElement('div')
+      let img = document.createElement('img')
+
+      thePoint.className = 'hinge-point'
+      infoDiv.className = 'hinge-name'
+      infoDiv.style.display = this.showHingeName ? 'block' : 'none' // 根据状态显示隐藏
+      hoverDiv.className = 'hinge-hover'
+      img.src = imgObj[dataObj.status]
+      infoDiv.innerHTML = dataObj.positionName
+      line1.innerHTML = dataObj.positionName
+      line2.innerHTML = `实时总人数: ${utils.num2Wan(dataObj.totalNum)}万`
+      line3.innerHTML = `状态: ${dataObj.status}`
+      hoverDiv.appendChild(line1)
+      hoverDiv.appendChild(line2)
+      hoverDiv.appendChild(line3)
+      thePoint.appendChild(infoDiv)
+      thePoint.appendChild(img)
+      thePoint.appendChild(hoverDiv)
+
+      return thePoint
+    },
+    /**
      * 点击地图点
      * @param name 地点名字
      */
@@ -651,7 +698,7 @@ export default {
       this.curLocation = theObj
     },
     /**
-     * 画点
+     * 画城市点
      */
     renderCityMarkers () {
       if (this.cityMarkers) { // 清空
@@ -668,7 +715,29 @@ export default {
           content: theDom
         })
         this.cityMarkers.push(marker)
-        theMap.add(marker)
+        window.theMap.add(marker)
+      }
+    },
+    /**
+     * 画枢纽点
+     * @param theList 枢纽点 数组
+     */
+    renderHingeMarkers (theList) {
+      if (this.hingeMarkers) { // 清空
+        this.removeHingeMarkers()
+      }
+      for (let obj of theList) {
+        let theDom = this.createInfoDiv2(obj)
+        let thelngLat = obj.lnglat
+        let thelngLats = thelngLat.split(',')
+        let marker = new AMap.Marker({
+          position: new AMap.LngLat(parseFloat(thelngLats[0]), parseFloat(thelngLats[1])), // 经纬度对象，也可以是经纬度构成的一维数组[116.39, 39.9]
+          title: '',
+          //          content: '<div style="color:white;width: 3em;font-size:10px;font-weight:bold;">' + theCityName + '</div>'
+          content: theDom
+        })
+        this.hingeMarkers.push(marker)
+        window.theMap.add(marker)
       }
     },
     /**
@@ -676,6 +745,11 @@ export default {
      */
     hideCityMarkers () {
       for (let m of this.cityMarkers) {
+        m.hide()
+      }
+    },
+    hideHingeMarkers () {
+      for (let m of this.hingeMarkers) {
         m.hide()
       }
     },
@@ -687,11 +761,19 @@ export default {
         m.show()
       }
     },
+    showHingeMarkers () {
+      for (let m of this.hingeMarkers) {
+        m.show()
+      }
+    },
     /**
      * 删除markers
      */
     removeCityMarkers () {
-      theMap.remove(this.cityMarkers)
+      window.theMap.remove(this.cityMarkers)
+    },
+    removeHingeMarkers () {
+      window.theMap.remove(this.hingeMarkers)
     },
     /**
      * 获取区域实时总人数及该区域预警枢纽列表
@@ -700,19 +782,22 @@ export default {
       const theName = this.curLocation.name
       const url = 'position/getAreaFlowAndWarningList?city=' + theName
       const data = {}
+      this.resData = null
       postData(url, data).then((res) => {
         console.log(res)
         if (!res.data) {
-          console.log('getAreaFlowAndWarningList: 没有数据')
+          console.log(`getAreaFlowAndWarningList: ${theName} 没有数据`)
           return
         }
         this.resData = res.data
         this.calHingeNum()
-        this.calWarningList()
         const status = this.mapStatus
         if (status === 1) {
+          this.calWarningList()
           this.renderCityMarkers()
-        } else if (status === 2) { // todo
+        } else if (status === 2) {
+          this.calHingeList()
+          this.renderHingeMarkers(this.findCityHinge())
         }
       })
     },
@@ -783,6 +868,34 @@ export default {
       }
     },
     /**
+     * 计算枢纽的总人数, 预警状态
+     */
+    calHingeList () {
+      for (let hingeObj of this.positionInfoList) {
+        hingeObj['totalNum'] = 0 // 总人数
+        hingeObj['status'] = '' // 枢纽状态 轻度 中度 重度
+      }
+      const theKeyArr = ['warningList_qd', 'warningList_ss', 'warningList_yz', 'warningList_zd']
+      const statusMap = {
+        'warningList_qd': '轻度预警',
+        'warningList_ss': '舒适',
+        'warningList_yz': '重度预警',
+        'warningList_zd': '中度预警'
+      }
+      for (let item of theKeyArr) {
+        let theArr = this.resData[item]
+        for (let obj of theArr) {
+          for (let hingeObj of this.positionInfoList) {
+            if (obj.positionName === hingeObj.positionName) { // 相等才进行操作
+              hingeObj['totalNum'] += obj.num // 人数
+              hingeObj['totalHinge']++ // 枢纽数
+              hingeObj['status'] = statusMap[item]
+            }
+          }
+        }
+      }
+    },
+    /**
      * 改变地点
      * @param posObj 位置对象 {name: string, adcode: number}
      */
@@ -791,31 +904,87 @@ export default {
       this.curLocation = posObj
     },
     /**
-     * 切换地点后的回调
-     */
-    switchCB () {
-      this.hideCityMarkers()
-      this.showReturnBtn = true
-    },
-    /**
      * 点击返回按钮
      */
     clickReturnBtn () {
-//      console.log(this.mapStatus)
-      this.curLocation = this.preLocation
+//      this.curLocation = this.preLocation
+      this.curLocation = {name: '全部市', adcode: 440000}
     },
-    getAreaNode (areaNode) {
-      //      console.log(areaNode)
-      var temp1 = areaNode._data.geoData.sub.features
-      let arr = []
-      for (var i = 0; i < temp1.length; i++) {
-        arr.push({
-          name: temp1[i]['properties']['name'],
-          adcode: temp1[i]['properties']['adcode']
-        })
+    /**
+     * 请求全部枢纽 名称 id 等数据 列表
+     */
+    getPositionInfoList () {
+      const url = 'position/getPositionInfoList'
+      const data = {}
+      postData(url, data).then((res) => {
+        console.log('getPositionInfoList:', res)
+        this.positionInfoList = res.data
+        this.findHingeLngLat()
+      })
+    },
+    /**
+     * 匹配枢纽点对应的坐标数据
+     */
+    findHingeLngLat () {
+      const placePoints = window.pointControl.PlacePoints // 地图点数组 有经纬度数据
+      for (let obj of this.positionInfoList) {
+        let have = false
+        for (let point of placePoints) {
+          if (obj.positionName === point['枢纽名称']) {
+            obj.lnglat = point['地址'][0]['lnglat']
+            have = true
+          }
+        }
+        if (!have) {
+          console.log(`${obj.positionName} 没有坐标数据.`)
+        }
       }
-      console.log(JSON.stringify(arr))
+//      console.log(this.positionInfoList)
     },
+    /**
+     * 找城市的枢纽点
+     * @param type 枢纽类型 0:全部(默认全部) 1:交通枢纽 2:服务区 3:收费站
+     */
+    findCityHinge (type = 0) {
+      const typeMap = {
+        0: ['火车站', '客运站', '高速', '机场', '港口', '服务区', '收费站'],
+        1: ['火车站', '客运站', '高速', '机场', '港口'],
+        2: ['服务区'],
+        3: ['收费站']
+      }
+      const typeArr = typeMap[type]
+      const theCity = this.curLocation.name
+      let theHingeArr = []
+      for (let obj of this.positionInfoList) {
+        if (obj.city === theCity) { // 取同一个名字的城市
+          for (let theType of typeArr) {
+            if (obj.positionType === theType) { // 取对应类型的站点
+              theHingeArr.push(obj)
+            }
+          }
+        }
+      }
+      return theHingeArr
+    },
+    /**
+     * 处理显示隐藏枢纽名字
+     * @param show boolean
+     */
+    handleShowHingeName (show) {
+      this.showHingeName = show
+      let domArr = document.getElementsByClassName('hinge-name')
+      let theStyle = this.showHingeName ? 'block' : 'none'
+      for (let dom of domArr) {
+        dom.style.display = theStyle
+      }
+    },
+    /**
+     * 改变显示枢纽的种类
+     * @param type 0:全部 1:交通枢纽 2:服务区 3:收费站
+     */
+    changeShowHingeType (type) {
+      this.renderHingeMarkers(this.findCityHinge(type))
+    }
   },
   beforeDestroy () {
     if (!this.chartL1) {

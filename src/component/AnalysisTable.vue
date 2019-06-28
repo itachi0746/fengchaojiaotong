@@ -40,7 +40,21 @@ export default {
     }
   },
   components: {},
-
+  props: {
+    curLocation: {
+      type: Object,
+      default: null
+    },
+    mapStatus: { // 地图状态
+      type: Number,
+      default: null
+    }
+  },
+  watch: {
+    curLocation (newVal, oldVal) {
+      this.getAreaNum()
+    }
+  },
   computed: {
     intervalNum () {
       return this.lineNum + 1
@@ -54,17 +68,17 @@ export default {
     setHeight () {
       const theHeight = this.$refs['table-inner'].offsetHeight
       this.tableLiHeight = theHeight
-//      this.$refs['table-main'].style.height = theHeight + 'px'
-//      this.$refs['table-li'].style.height = theHeight + 'px'
     },
     /**
      * 获取各区域人数
      */
     getAreaNum () {
-      const url = 'position/getAreaNum?city=全部市'
+      const theName = this.curLocation.name
+      const url = 'position/getAreaNum?city=' + theName
       const data = {}
       postData(url, data).then((res) => {
         console.log(res)
+        this.tableData = []
         let theList = res.data
         let theMaxNum = 0 // 记录最大值
         for (let obj of theList) { // 遍历 找出最大人数值
@@ -76,9 +90,14 @@ export default {
           theMaxNum = objNum > theMaxNum ? objNum : theMaxNum
         }
         this.maximum = this.handleMaxNum(theMaxNum)
+        const theMap = {
+          1: 'city',
+          2: 'district'
+        }
         for (let obj of theList) { // 遍历 编入表格数据
           let thePercent = (obj.num / this.maximum * 100) + '%'
-          let theName = obj.city
+          let theKey = theMap[this.mapStatus]
+          let theName = obj[theKey]
           this.tableData.push({name: theName, percent: thePercent})
         }
       })

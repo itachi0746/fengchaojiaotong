@@ -21,8 +21,7 @@ export default {
       showList: false, // 显示列表的开关
       posList: null, // 地点列表
 //      curLocation: {name: '全部市', adcode: 440000},
-      theLocation: null,
-      resData: null // 请求返回的数据
+      theLocation: null
     }
   },
 
@@ -31,6 +30,11 @@ export default {
     curLocation: {
       type: Object,
       default: null
+    }
+  },
+  watch: {
+    curLocation (newVal, oldVal) {
+      this.theLocation = newVal
     }
   },
 
@@ -42,14 +46,6 @@ export default {
      */
     clickBox () {
       this.showList = !this.showList
-    },
-    getData () {
-      const url = 'position/getPositionInfoList'
-      const data = {}
-      postData(url, data).then((res) => {
-        console.log(res)
-        this.resData = res.data
-      })
     },
     /**
      * 点击li
@@ -65,7 +61,6 @@ export default {
 
   created () {
     this.theLocation = this.curLocation
-    this.getData()
   },
 
   mounted () {

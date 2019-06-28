@@ -65,8 +65,8 @@ export default {
       const theName = this.curLocation.name
       const url = `position/getPositionNum?city=${theName}&positionType=全部`
       const data = {}
+      this.numRankList = []
       postData(url, data).then((res) => {
-        this.numRankList = []
         console.log(res)
         let len = res.data.length
         this.theList = res.data

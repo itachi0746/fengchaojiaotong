@@ -65,6 +65,7 @@ export default {
      * 当前激活tab为全部时
      */
     calWarningList () {
+      this.activeId = 0 // 默认全部
       this.warningList = [] // 清空
       const theArr = ['warningList_yz', 'warningList_zd', 'warningList_qd', 'warningList_ss'] // 注意排序 从严重到舒适
       let theList = []

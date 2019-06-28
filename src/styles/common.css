@@ -64,4 +64,40 @@ html,body,#app {
   background: -moz-radial-gradient(red 1%, rgba(255,255,0,0.6) 60%, rgba(114,224,118,0.5) 90%); /* Firefox 3.6 - 15 */
   background: radial-gradient(red 1%, rgba(255,255,0,0.6) 60%, rgba(114,224,118,0.5) 90%); /* 标准的语法（必须放在最后） */
 }
+.hinge-hover {
+  width: 150px;
+  padding: 10px;
+  font-size: 15px;
+  color: #fff;
+  position: absolute;
+  z-index: 1000;
+  left: -50px;
+  top: -100px;
+  display: none;
+  transition: all .3s;
+  border: 1px solid #278bdb;
+  background-color: rgba(47, 165, 255, 0.5);
+}
+.hinge-point {
+  width: 38px;
+  height: 53px;
+  position: relative;
+  /*background-color: #000000;*/
+}
+.hinge-point:hover .hinge-hover {
+  display: block;
+}
+.hinge-point img {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
 
+.hinge-name {
+  font-size: 16px;
+  color: #dadada;
+  position: absolute;
+  top: -15px;
+  left: -10px;
+  width: 200px;
+}
