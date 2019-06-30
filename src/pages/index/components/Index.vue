@@ -9,7 +9,9 @@
         <div class="the-bg bg-l" :style="{height: bgHeight}">
           <!--left-->
           <Location @changeLocation="changeLocation" :curLocation="curLocation"></Location>
+          <Calender></Calender>
           <PeopleNum v-if="resData" :areaFlowNum="resData.areaFlow.num"></PeopleNum>
+          <Linkage v-if="false"></Linkage>
           <div class="chart-l1-box">
             <ChartTitle :CTData="CTDataObj1"></ChartTitle>
             <div class="chart-l1" ref="chart-l1" v-if="showChartL1"></div>
@@ -86,6 +88,8 @@ import AnalysisTable2 from '../../../component/AnalysisTable2.vue'
 import Location from '../../../component/Location.vue'
 import BtmTab from '../../../component/BtmTab.vue'
 import PeopleNum from '../../../component/PeopleNum.vue'
+import Calender from '../../../component/Calendar.vue'
+import Linkage from '../../../component/Linkage.vue'
 import { theCitys, theCityData } from '../../../common/mapData'
 import PlacePointView from '../../../common/data'
 
@@ -125,7 +129,9 @@ export default {
     HingeRankingTable,
     BtmTab,
     AnalysisTable2,
-    PeopleNum
+    PeopleNum,
+    Calender,
+    Linkage
   },
   computed: {
     mapStatus () { // 地图状态 1代表省(默认) 2代表市 3代表区 跟随curLocation改变而改变
@@ -1021,14 +1027,6 @@ export default {
   }
 
   .main-box {
-    /*position: absolute;*/
-    /*z-index: 1000;*/
-    /*top: 0;*/
-    /*left: 0;*/
-    /*width: 100%;*/
-    /*height: 100%;*/
-    /*color: #ffffff;*/
-    /*padding-top: 80px;*/
     position: relative;
     z-index: 1000;
     color: #ffffff;
@@ -1066,6 +1064,7 @@ export default {
     left: 0;
     /*top: 238px;*/
     bottom: 39.17%;
+    /*display: none;*/
   }
 
   .chart-l2-box {

@@ -13,7 +13,6 @@
 </template>
 
 <script>
-import {postData} from '../common'
 import {theCityData} from '../common/mapData'
 export default {
   data () {
@@ -82,7 +81,9 @@ export default {
     background: rgba(47, 165, 255, 0.3);
     font-size: 22px;
     color: #dfe5ea;
-    @include borderBox();
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
     z-index: 10;
     /*padding: 0 22px 0 14px;*/
   }
@@ -110,14 +111,17 @@ export default {
     max-height: 500px;
     overflow-y: auto;
     background: rgba(47, 165, 255, 1);
-    li {
-      width: 285px;
-      height: 40px;
-      @include borderBox();
-      padding: 6px 0 0 48px;
-    }
-    li:hover {
-      background: rgb(113, 196, 255);
-    }
+
+  }
+  .loc-list li {
+    width: 285px;
+    height: 40px;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+    padding: 6px 0 0 48px;
+  }
+  .loc-list li:hover {
+    background: rgb(113, 196, 255);
   }
 </style>

@@ -3,7 +3,7 @@
 import Vue from 'vue'
 import App from './App'
 import router from './router'
-import { Button, Row, Progress, Switch } from 'element-ui'
+import { Button, Row, Progress, Switch, DatePicker } from 'element-ui'
 import '@/common/rem.js'
 import '@/styles/reset.css'
 import '@/styles/common.css'
@@ -15,6 +15,7 @@ Vue.use(Button)
 Vue.use(Row)
 Vue.use(Progress)
 Vue.use(Switch)
+Vue.use(DatePicker)
 Vue.config.productionTip = false
 
 /* eslint-disable no-new */
