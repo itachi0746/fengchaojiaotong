@@ -90,8 +90,9 @@ import BtmTab from '../../../component/BtmTab.vue'
 import PeopleNum from '../../../component/PeopleNum.vue'
 import Calender from '../../../component/Calendar.vue'
 import Linkage from '../../../component/Linkage.vue'
-import { theCitys, theCityData } from '../../../common/mapData'
+import { theCitys, theCityData, rectangleDataObj } from '../../../common/mapData'
 import PlacePointView from '../../../common/data'
+import TrafficView from '../../../common/traffic'
 
 export default {
   data () {
@@ -151,6 +152,7 @@ export default {
       this.preLocation = oldVal
       const status = this.mapStatus
       window.mapStatus = this.mapStatus
+      window.traffic.removePaths() // 清除画的框
       if (status === 1) { // 省
         this.showCityMarkers()
         this.removeHingeMarkers()
@@ -165,6 +167,10 @@ export default {
         this.showBtm = true
         this.showReturnBtn = true
         this.showChartL1 = false
+      } else { // 枢纽点
+        this.hideHingeMarkers()
+        this.moveToPoint()
+        return
       }
       this.switch2AreaNode(newVal.adcode)
       this.getAreaFlowAndWarningList()
@@ -195,7 +201,7 @@ export default {
         // 创建一个实例
         let districtExplorer = window.districtExplorer = new DistrictExplorer({
           eventSupport: true, // 打开事件支持
-          map: theMap
+          map: window.theMap
         })
 
         // 当前聚焦的区域
@@ -403,9 +409,8 @@ export default {
 
         // 切换区域
         function switch2AreaNode (adcode, callback) {
-
           if (currentAreaNode && ('' + currentAreaNode.getAdcode() === '' + adcode)) {
-            return
+//            return
           }
 
           loadAreaNode(adcode, function (error, areaNode) {
@@ -432,11 +437,10 @@ export default {
           })
         }
 
-//        me.switch2AreaNode = switch2AreaNode
         me.switch2AreaNode = function (adcode) {
           switch2AreaNode(adcode)
-//          me.switchCB()
         }
+        window.switch2AreaNode = switch2AreaNode
 
         // 加载区域
         function loadAreaNode (adcode, callback) {
@@ -537,6 +541,7 @@ export default {
       })
       window.theMap = theMap
       window.pointControl = new PlacePointView(window.theMap)
+      window.traffic = new TrafficView(window.theMap)
     },
     /**
      * 初始化图表
@@ -644,7 +649,7 @@ export default {
       infoDiv.appendChild(line4)
       thePoint.appendChild(infoDiv)
       thePoint.onclick = () => {
-        this.clickMarker(dataObj.name)
+        this.clickCityMarker(dataObj.name)
       }
       return thePoint
     },
@@ -682,14 +687,16 @@ export default {
       thePoint.appendChild(infoDiv)
       thePoint.appendChild(img)
       thePoint.appendChild(hoverDiv)
-
+      thePoint.onclick = () => {
+        this.clickHingeMarker(dataObj)
+      }
       return thePoint
     },
     /**
-     * 点击地图点
+     * 点击地图点(城市的地图点)
      * @param name 地点名字
      */
-    clickMarker (name) {
+    clickCityMarker (name) {
       const theName = name
       let theObj = null
       for (let obj of theCityData) {
@@ -702,6 +709,14 @@ export default {
         return
       }
       this.curLocation = theObj
+    },
+    /**
+     * 点击地图点(枢纽的地图点)
+     * @param dataObj 地点数据对象
+     */
+    clickHingeMarker (dataObj) {
+      const theName = dataObj.positionName
+      this.curLocation = {name: theName, adcode: ''}
     },
     /**
      * 画城市点
@@ -914,7 +929,20 @@ export default {
      */
     clickReturnBtn () {
 //      this.curLocation = this.preLocation
-      this.curLocation = {name: '全部市', adcode: 440000}
+      const status = this.mapStatus
+      window.mapStatus = this.mapStatus
+      if (status === 1) { // 省
+
+      } else if (status === 2) { // 市 返回省视图
+        this.curLocation = {name: '全部市', adcode: 440000}
+      } else { // 枢纽 返回市视图
+        const theName = this.curLocation.name
+        for (let pos of this.positionInfoList) {
+          if (theName === pos.positionName) { // 找到枢纽
+            this.curLocation = {name: pos.city, adcode: pos.adcode}
+          }
+        }
+      }
     },
     /**
      * 请求全部枢纽 名称 id 等数据 列表
@@ -926,6 +954,8 @@ export default {
         console.log('getPositionInfoList:', res)
         this.positionInfoList = res.data
         this.findHingeLngLat()
+        this.findCityAdcode()
+        this.findHingeRectData()
       })
     },
     /**
@@ -946,6 +976,42 @@ export default {
         }
       }
 //      console.log(this.positionInfoList)
+    },
+    /**
+     * 找到positionInfoList里对象的adcode
+     */
+    findCityAdcode () {
+      for (let obj of this.positionInfoList) {
+        let have = false
+        for (let city of theCityData) { // 城市adcode 数据
+          if (obj.city === city['name']) {
+            obj.adcode = city.adcode
+            have = true
+          }
+        }
+        if (!have) {
+          console.log(`${obj.city} 没有行政区号数据.`)
+        }
+      }
+//      console.log(this.positionInfoList)
+    },
+    /**
+     * 找到枢纽的画框的数据
+     */
+    findHingeRectData () {
+      for (let obj of this.positionInfoList) {
+        let have = false
+        for (let name in rectangleDataObj) {
+          if (obj.positionName === name) {
+            obj.rectData = rectangleDataObj[name]
+            have = true
+            break
+          }
+        }
+        if (!have) {
+//          console.log(`${obj.city} 没有行政区号数据.`)
+        }
+      }
     },
     /**
      * 找城市的枢纽点
@@ -990,6 +1056,23 @@ export default {
      */
     changeShowHingeType (type) {
       this.renderHingeMarkers(this.findCityHinge(type))
+    },
+    /**
+     * 点击枢纽点后 移动放大到枢纽
+     */
+    moveToPoint () {
+      window.districtExplorer.clearFeaturePolygons()
+      let theName = this.curLocation.name
+      for (let obj of this.positionInfoList) {
+        if (theName === obj.positionName) {
+          let lng = obj.lnglat.split(',')[0]
+          let lat = obj.lnglat.split(',')[1]
+          let arg = [parseFloat(lng), parseFloat(lat)]
+          let theZoom = 18
+          window.pointControl.MoveToPoint(arg, theZoom)
+          window.traffic.drawTheRectangle(obj.rectData)
+        }
+      }
     }
   },
   beforeDestroy () {

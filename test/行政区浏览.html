@@ -397,6 +397,25 @@ for(var i=0;i<temp1.length;i++){
   }
 }
 </script>
+<script>
+var arr = []
+var have;
+
+for (var name in rectangleDataObj) {
+  have = false
+  for (var i = 0; i < a.length; i++) {
+    var item = a[i];
+    var theName = item.positionName
+    if (name === theName) {
+      have = true
+      break
+    }
+  }
+  if (!have) {
+    arr.push(name)
+  }
+}
+</script>
 </body>
 
 </html>
