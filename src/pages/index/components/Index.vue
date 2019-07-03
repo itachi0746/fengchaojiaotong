@@ -93,6 +93,7 @@ import Linkage from '../../../component/Linkage.vue'
 import { theCitys, theCityData, rectangleDataObj } from '../../../common/mapData'
 import PlacePointView from '../../../common/data'
 import TrafficView from '../../../common/traffic'
+import MapBase from '../../../common/reli'
 
 export default {
   data () {
@@ -153,6 +154,7 @@ export default {
       const status = this.mapStatus
       window.mapStatus = this.mapStatus
       window.traffic.removePaths() // 清除画的框
+      window.mapbase.removeReli() // 清除热力
       if (status === 1) { // 省
         this.showCityMarkers()
         this.removeHingeMarkers()
@@ -173,11 +175,13 @@ export default {
         return
       }
       this.switch2AreaNode(newVal.adcode)
+      window.theMap.setPitch(45)
       this.getAreaFlowAndWarningList()
     }
   },
   mounted () {
     window.echarts = echarts
+    window.mapbase = new MapBase()
     this.initMap()
     this.initDistrict()
   },
@@ -1071,6 +1075,7 @@ export default {
           let theZoom = 18
           window.pointControl.MoveToPoint(arg, theZoom)
           window.traffic.drawTheRectangle(obj.rectData)
+          window.mapbase.drawReli(theName, 1000)
         }
       }
     }

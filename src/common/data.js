@@ -239,7 +239,7 @@ PlacePointView.prototype.MoveToPoint = function (lntlat, maxZoom) {
   var thePitchTimer = window.setInterval(function () {
     if (theZoom > maxZoom) {
       window.clearInterval(thePitchTimer);
-      this.theMap.setPitch(45);
+      this.theMap.setPitch(0);
       // console.log("结束导航到指定点!");
       return;
     }

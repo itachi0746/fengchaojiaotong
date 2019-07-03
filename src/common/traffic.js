@@ -131,6 +131,10 @@ var RoadPath;
  * @param paramters
  */
 TrafficView.prototype.drawTheRectangle = function (paramters) {
+  if (!paramters || !paramters.length) {
+    console.log(`参数为空: ${paramters}`)
+    return
+  }
   for (var i = 0; i < this.RoadPaths.length; i++) {
     this.TheMap.remove(this.RoadPaths[i]);
   }
