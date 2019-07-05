@@ -15,6 +15,21 @@
       </ul>
       <span>万</span>
     </div>
+    <!--比例-->
+    <div class="proportion">
+      <div class="p-inner">
+        <div class="tb">
+          <span>同比:</span>
+          <span class="high">20% </span>
+          <span class="high">↑</span>
+        </div>
+        <div class="tb">
+          <span>同比:</span>
+          <span class="high">20% </span>
+          <span class="high">↑</span>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -116,4 +131,26 @@ export default {
       font-size: 24.5px;
     }
   }
+  .proportion {
+    position: absolute;
+    top: 142px;
+    left: 223px;
+    width: 127px;
+    height: 56px;
+    background: rgba(46,162,255,0.6);
+    box-shadow: inset 0 0 8px 3px #46d7ff;
+    font-size: 18px;
+    color: #ffffff;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .high {
+    color: #1ee44c;
+  }
+  .low {
+    color: #e41e3e;
+  }
+
 </style>

@@ -9,26 +9,23 @@
         <div class="the-bg bg-l" :style="{height: bgHeight}">
           <!--left-->
           <Location @changeLocation="changeLocation" :curLocation="curLocation"></Location>
-          <Calender></Calender>
+          <Calender v-if="mapStatus===3"></Calender>
           <PeopleNum v-if="resData" :areaFlowNum="resData.areaFlow.num"></PeopleNum>
-          <Linkage v-if="false"></Linkage>
-          <div class="chart-l1-box">
+          <Linkage v-if="mapStatus===3"></Linkage>
+          <div class="chart-l1-box" v-if="mapStatus!==3">
             <ChartTitle :CTData="CTDataObj1"></ChartTitle>
-            <div class="chart-l1" ref="chart-l1" v-if="showChartL1"></div>
+            <AnalysisTable3 v-if="showChartL1" :curCity="curLocation.name"></AnalysisTable3>
             <AnalysisTable2 v-if="!showChartL1" :curCity="curLocation.name"></AnalysisTable2>
           </div>
-          <div class="chart-l2-box">
+          <div class="chart-l2-box" v-if="mapStatus!==3">
             <ChartTitle :CTData="CTDataObj2"></ChartTitle>
             <AnalysisTable :curLocation="curLocation" :mapStatus="mapStatus"></AnalysisTable>
           </div>
           <!--left-->
         </div>
-        <div class="the-bg bg-r" :style="{height: bgHeight}">
+        <div class="the-bg bg-r" v-if="mapStatus!==3" :style="{height: bgHeight}">
           <!--right-->
-          <div class="return-btn" v-if="showReturnBtn" @click="clickReturnBtn">
-            <img src="../assets/返回icon.png" alt="">
-            <span>返回</span>
-          </div>
+
           <div class="total-num-box">
             监测枢纽总数: <i>{{totalHinge}}</i>
           </div>
@@ -63,6 +60,11 @@
           </div>
           <!--right-->
         </div>
+        <!--返回按钮-->
+        <div class="return-btn" v-if="showReturnBtn" @click="clickReturnBtn">
+          <img src="../assets/返回icon.png" alt="">
+          <span>返回</span>
+        </div>
       </div>
       <!--<div>-->
       <!--<div id="panel" class="scrollbar1">-->
@@ -70,8 +72,9 @@
       <!--</ul>-->
       <!--</div>-->
       <!--</div>-->
-      <!--底部-->
-      <BtmTab v-if="showBtm" @showHingeName="handleShowHingeName" @changeHingePart="changeShowHingeType"></BtmTab>
+      <!--底部tab-->
+      <BtmTab v-if="mapStatus===2" @showHingeName="handleShowHingeName" @changeHingePart="changeShowHingeType"></BtmTab>
+      <BtmChartBox v-if="mapStatus===3"></BtmChartBox>
     </div>
   </div>
 </template>
@@ -85,8 +88,10 @@ import HingeTable from '../../../component/HingeTable.vue'
 import HingeRankingTable from '../../../component/HingeRankingTable.vue'
 import AnalysisTable from '../../../component/AnalysisTable.vue'
 import AnalysisTable2 from '../../../component/AnalysisTable2.vue'
+import AnalysisTable3 from '../../../component/AnalysisTable3.vue'
 import Location from '../../../component/Location.vue'
 import BtmTab from '../../../component/BtmTab.vue'
+import BtmChartBox from '../../../component/BtmChartBox.vue'
 import PeopleNum from '../../../component/PeopleNum.vue'
 import Calender from '../../../component/Calendar.vue'
 import Linkage from '../../../component/Linkage.vue'
@@ -104,7 +109,6 @@ export default {
       CTDataObj2: {hasLine: true, iconId: 1, font: '城市人数分析'},
       CTDataObj3: {hasLine: true, iconId: 2, font: '预警枢纽列表'},
       CTDataObj4: {hasLine: true, iconId: 1, font: '枢纽人数排行'},
-      chartL1: null,
       bgHeight: null, // 左右背景的高度
       resData: null, // 区域实时总人数及该区域预警枢纽列表(接口返回的数据)
       totalHinge: null, // 总枢纽数
@@ -116,7 +120,6 @@ export default {
       hingeMarkers: [], // 存放地图标记点(枢纽)
       warningList: [], // 处理后的枢纽预警列表
       showReturnBtn: false, // 返回按钮显示开关
-      showBtm: false, // 显示底部开关
       showChartL1: true, // 省界面 各行业人数分析表 显示开关
       positionInfoList: [], // 枢纽数据列表 名称 id等
       showHingeName: true // 显示枢纽点名称 开关
@@ -133,7 +136,9 @@ export default {
     AnalysisTable2,
     PeopleNum,
     Calender,
-    Linkage
+    Linkage,
+    AnalysisTable3,
+    BtmChartBox
   },
   computed: {
     mapStatus () { // 地图状态 1代表省(默认) 2代表市 3代表区 跟随curLocation改变而改变
@@ -158,15 +163,12 @@ export default {
       if (status === 1) { // 省
         this.showCityMarkers()
         this.removeHingeMarkers()
-        this.showBtm = false
         this.showReturnBtn = false
         this.showChartL1 = true
-        this.getPositionTypeNum()
       } else if (status === 2) { // 地市
         this.hideCityMarkers()
         this.removeHingeMarkers()
         this.renderHingeMarkers(this.findCityHinge())
-        this.showBtm = true
         this.showReturnBtn = true
         this.showChartL1 = false
       } else { // 枢纽点
@@ -187,7 +189,6 @@ export default {
   },
   created () {
     this.getAreaFlowAndWarningList()
-    this.getPositionTypeNum()
     this.getPositionInfoList()
   },
   methods: {
@@ -547,80 +548,7 @@ export default {
       window.pointControl = new PlacePointView(window.theMap)
       window.traffic = new TrafficView(window.theMap)
     },
-    /**
-     * 初始化图表
-     * @param data 图表数据
-     */
-    initChart (data) {
-      this.chartL1 = echarts.init(this.$refs['chart-l1'])
-      let option = {
-        title: {
-          text: '各行业人数分析',
-          subtext: '',
-          x: 'center',
-          show: false
-        },
-        tooltip: {
-          trigger: 'item',
-          formatter: '{a} <br/>{b} : {c} ({d}%)',
-          show: false
-        },
-        legend: {
-          orient: 'vertical',
-          left: 'left',
-          show: false,
-          data: ['客运站', '火车站', '机场', '服务区', '收费站']
-        },
-        series: [
-          {
-            name: '访问来源',
-            type: 'pie',
-            radius: ['20%', '60%'],
-            center: ['50%', '60%'],
-            //            data: [
-            //              {value: 33.5, name: '客运站'},
-            //              {value: 31.0, name: '火车站'},
-            //              {value: 23.4, name: '机场'},
-            //              {value: 13.5, name: '服务区'},
-            //              {value: 15.48, name: '收费站'}
-            //            ],
-            data: data,
-            itemStyle: {
-              emphasis: {
-                shadowBlur: 10,
-                shadowOffsetX: 0,
-                shadowColor: 'rgba(0, 0, 0, 0.5)'
-              }
-            },
-            animation: false,
-            label: {
-              normal: {
-                show: true,
-                //                position: 'inside',
-                position: 'outside',
-                formatter: '{b} {c}%',
-                padding: [0, 0],
-                fontSize: '20'
-              },
-              emphasis: {
-                show: true,
-                textStyle: {
-                  fontSize: '20',
-                  fontWeight: 'bold'
-                }
-              }
-            },
-            labelLine: {
-              normal: {
-                show: true
-              }
-            }
-          }
-        ]
-      }
-      // 把配置和数据放这里
-      this.chartL1.setOption(option)
-    },
+
     /**
      * 设置背景的高度
      * @param height 头部高度
@@ -826,27 +754,7 @@ export default {
         }
       })
     },
-    /**
-     * 获取各枢纽类型人数
-     */
-    getPositionTypeNum () {
-      const theName = this.curLocation.name
-      const url = 'position/getPositionTypeNum?city=' + theName
-      const data = {}
-      postData(url, data).then((res) => {
-        console.log(res)
-        let theData = []
-        let totalNum = 0 // 总数
-        for (let obj of res.data) {
-          totalNum += obj.num
-        }
-        for (let obj of res.data) {
-          let val = obj.num / totalNum * 100
-          theData.push({value: val, name: obj.positionType})
-        }
-        this.initChart(theData)
-      })
-    },
+
     /**
      * 计算枢纽数量
      */
@@ -1081,11 +989,7 @@ export default {
     }
   },
   beforeDestroy () {
-    if (!this.chartL1) {
-      return
-    }
-    this.chartL1.dispose()
-    this.chartL1 = null
+
   }
 }
 </script>

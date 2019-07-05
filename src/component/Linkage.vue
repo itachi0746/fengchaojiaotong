@@ -1,11 +1,11 @@
 <template>
     <!--预警联动 组件-->
     <div class="linkage">
-      <div class="linkage-inner cp">
+      <div class="linkage-inner cp" @click="clickLink">
         <img src="../assert/预警icon.png" alt="">
         <span>预警联动</span>
       </div>
-      <div class="msg-box">
+      <div class="msg-box" v-if="showBox">
         <div class="inner-msg-box">
           <div class="title">重度预警通知</div>
           <ul>
@@ -22,7 +22,7 @@
             <div class="b-sel"></div>
           </div>
           <div class="action-box">
-            <div class="the-btn close">关闭</div>
+            <div class="the-btn close" @click="clickClose">关闭</div>
             <div class="the-btn">发送</div>
           </div>
         </div>
@@ -40,7 +40,8 @@ export default {
         {name: '语音通知'},
         {name: '视频通知'}
       ],
-      activeId: 0
+      activeId: 0,
+      showBox: false // 显示联动box
     }
   },
 
@@ -51,6 +52,12 @@ export default {
   methods: {
     clickLi (index) {
       this.activeId = index
+    },
+    clickLink () {
+      this.showBox = !this.showBox
+    },
+    clickClose () {
+      this.showBox = false
     }
   },
 
@@ -83,6 +90,7 @@ export default {
     height: 100%;
     @include defaultFlex;
   }
+
   .msg-box {
     /*width: 873px;*/
     /*height: 407px;*/
@@ -95,8 +103,8 @@ export default {
     top: 0;
     font-size: 18px;
     color: #051538;
-
   }
+
   .inner-msg-box {
     padding-left: 19px;
   }
