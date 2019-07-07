@@ -1,19 +1,17 @@
 <template>
-  <div>
-    <!--日历组件-->
-    <div class="cal cp">
-      <div class="inner-box">
-        <span>{{value1}}</span>
-        <img class="icon1" src="../assert/calender.png" alt="">
-      </div>
-      <div class="calender">
-        <el-date-picker
-          v-model="value1"
-          :type="calType"
-          :value-format="formatVal"
-          placeholder="选择日期">
-        </el-date-picker>
-      </div>
+  <!--日历组件-->
+  <div class="cal cp">
+    <div class="inner-box">
+      <span>{{value1}}</span>
+      <img class="icon1" src="../assert/calender.png" alt="">
+    </div>
+    <div class="calender">
+      <el-date-picker
+        v-model="value1"
+        :type="calType"
+        :value-format="formatVal"
+        placeholder="选择日期">
+      </el-date-picker>
     </div>
   </div>
 </template>
@@ -22,7 +20,6 @@
 export default {
   data () {
     return {
-      theDate: '2019-05-05',
       value1: '',
       calType: 'date', // month/date 月/具体日期
       formatVal: 'yyyy-MM-dd' // yyyy-MM 月格式
@@ -30,26 +27,28 @@ export default {
   },
 
   components: {},
-
+  watch: {
+    value1 (newVal, oldVal) {
+      console.log(`日期为: ${newVal}`)
+      window.curDate = newVal
+      this.$emit('changeDate', newVal)
+    }
+  },
+  props: {
+    curDate: {
+      type: String,
+      default: null
+    }
+  },
   computed: {},
 
   methods: {
-    setDate () {
-      let st = new Date()
-      let nowYear = st.getFullYear()
-      let nowMonth = st.getMonth() + 1
-      let nowDay = st.getDate()
-      this.value1 = nowYear + '-' + this.add0(nowMonth) + '-' + this.add0(nowDay)
-    },
-    add0 (m) {
-      return m < 10 ? '0' + m : m
-    }
   },
 
   created () {},
 
   mounted () {
-    this.setDate()
+    this.value1 = this.curDate
   },
 
   beforeDestroy () {}

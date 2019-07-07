@@ -137,5 +137,20 @@ export default {
     let result = this.num2Wan(num)
     result = this.str2StrArr(result)
     return result
+  },
+  /**
+   * 去掉字符串中的'0'
+   * @param str
+   */
+  strDelZero (str) {
+    let num = parseInt(str)
+    if (num < 10) {
+      let i = str.indexOf('0')
+      if (i > -1) {
+        str = str.slice(i + 1)
+      }
+    }
+    // console.log(str);
+    return str
   }
 }

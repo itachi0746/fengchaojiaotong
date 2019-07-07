@@ -62,6 +62,15 @@ export default {
   methods: {
     clickTab (id) {
       this.activeId = id
+      if (id === 1) {
+        window.gotoPage('index.html')
+      }
+      if (id === 2) {
+        window.gotoPage('tqfx.html')
+      }
+      if (id === 3) {
+        window.gotoPage('qxdc.html')
+      }
     },
     /**
      * 发送高度

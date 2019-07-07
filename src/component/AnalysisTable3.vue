@@ -118,12 +118,11 @@ export default {
         }
         this.initChart(theData)
       })
-    },
+    }
   },
 
   created () {
     this.getPositionTypeNum()
-
   },
 
   mounted () {},

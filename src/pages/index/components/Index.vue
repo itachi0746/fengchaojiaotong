@@ -1,87 +1,93 @@
 <template>
   <div class="index">
     <!--地图容器-->
-    <div class="map" id="container">
-      <!--头部-->
-      <Header @getHeaderHeight="getHeaderHeight"></Header>
-      <!--主要内容区域-->
-      <div class="main-box cd">
-        <div class="the-bg bg-l" :style="{height: bgHeight}">
-          <!--left-->
-          <Location @changeLocation="changeLocation" :curLocation="curLocation"></Location>
-          <Calender v-if="mapStatus===3"></Calender>
-          <PeopleNum v-if="resData" :areaFlowNum="resData.areaFlow.num"></PeopleNum>
-          <Linkage v-if="mapStatus===3"></Linkage>
-          <div class="chart-l1-box" v-if="mapStatus!==3">
-            <ChartTitle :CTData="CTDataObj1"></ChartTitle>
-            <AnalysisTable3 v-if="showChartL1" :curCity="curLocation.name"></AnalysisTable3>
-            <AnalysisTable2 v-if="!showChartL1" :curCity="curLocation.name"></AnalysisTable2>
-          </div>
-          <div class="chart-l2-box" v-if="mapStatus!==3">
-            <ChartTitle :CTData="CTDataObj2"></ChartTitle>
-            <AnalysisTable :curLocation="curLocation" :mapStatus="mapStatus"></AnalysisTable>
-          </div>
-          <!--left-->
-        </div>
-        <div class="the-bg bg-r" v-if="mapStatus!==3" :style="{height: bgHeight}">
-          <!--right-->
+    <div ref="chartMap" class="mapview" id="mapview">
 
-          <div class="total-num-box">
-            监测枢纽总数: <i>{{totalHinge}}</i>
-          </div>
-          <div class="meter-box">
-            <div class="meter meter-normal">
-              <div>
-                <div class="meter-num">
-                  <i>{{normalHinge}}</i>
-                  个
-                </div>
-                <div class="meter-type">正常</div>
-              </div>
-            </div>
-            <div class="meter meter-warning">
-              <div>
-                <div class="meter-num">
-                  <i>{{warningHinge}}</i>
-                  个
-                </div>
-                <div class="meter-type">告警</div>
-              </div>
-
-            </div>
-          </div>
-          <div class="chart-r1-box">
-            <ChartTitle :CTData="CTDataObj3"></ChartTitle>
-            <HingeTable  v-if="resData" :tableData="resData"></HingeTable>
-          </div>
-          <div class="chart-r2-box">
-            <ChartTitle :CTData="CTDataObj4"></ChartTitle>
-            <HingeRankingTable :curLocation="curLocation"></HingeRankingTable>
-          </div>
-          <!--right-->
-        </div>
-        <!--返回按钮-->
-        <div class="return-btn" v-if="showReturnBtn" @click="clickReturnBtn">
-          <img src="../assets/返回icon.png" alt="">
-          <span>返回</span>
-        </div>
-      </div>
-      <!--<div>-->
-      <!--<div id="panel" class="scrollbar1">-->
-      <!--<ul id="area-tree">-->
-      <!--</ul>-->
-      <!--</div>-->
-      <!--</div>-->
-      <!--底部tab-->
-      <BtmTab v-if="mapStatus===2" @showHingeName="handleShowHingeName" @changeHingePart="changeShowHingeType"></BtmTab>
-      <BtmChartBox v-if="mapStatus===3"></BtmChartBox>
     </div>
+    <!--头部-->
+    <Header @getHeaderHeight="getHeaderHeight"></Header>
+
+    <!--主要内容区域-->
+    <div class="main-box cd">
+      <div class="the-bg bg-l" :style="{height: bgHeight}">
+        <!--left-->
+        <Location @changeLocation="changeLocation" :curLocation="curLocation"></Location>
+        <Calender v-if="mapStatus===3" @changeDate="changeDate" :curDate="curDate"></Calender>
+        <LaiyuanTab></LaiyuanTab>
+        <!--人数组件-->
+        <PeopleNum v-if="resData && mapStatus!==3" :areaFlowNum="resData.areaFlow.num"></PeopleNum>
+        <!--人数+比例组件-->
+        <PeopleNumC v-if="mapStatus===3" :positionId="positionId"></PeopleNumC>
+        <Linkage v-if="mapStatus===3"></Linkage>
+        <div class="chart-l1-box" v-if="mapStatus!==3">
+          <ChartTitle :CTData="CTDataObj1"></ChartTitle>
+          <ClearFix></ClearFix>
+          <AnalysisTable3 v-if="showChartL1" :curCity="curLocation.name"></AnalysisTable3>
+          <AnalysisTable2 v-if="!showChartL1" :curCity="curLocation.name"></AnalysisTable2>
+        </div>
+        <div class="chart-l2-box" v-if="mapStatus!==3">
+          <ChartTitle :CTData="CTDataObj2"></ChartTitle>
+          <ClearFix></ClearFix>
+          <AnalysisTable :curLocation="curLocation" :mapStatus="mapStatus"></AnalysisTable>
+        </div>
+        <!--left-->
+      </div>
+      <div class="the-bg bg-r" v-if="mapStatus!==3" :style="{height: bgHeight}">
+        <!--right-->
+
+        <div class="total-num-box">
+          监测枢纽总数: <i>{{totalHinge}}</i>
+        </div>
+        <div class="meter-box">
+          <div class="meter meter-normal">
+            <div>
+              <div class="meter-num">
+                <i>{{normalHinge}}</i>
+                个
+              </div>
+              <div class="meter-type">正常</div>
+            </div>
+          </div>
+          <div class="meter meter-warning">
+            <div>
+              <div class="meter-num">
+                <i>{{warningHinge}}</i>
+                个
+              </div>
+              <div class="meter-type">告警</div>
+            </div>
+
+          </div>
+        </div>
+        <div class="chart-r1-box">
+          <ChartTitle :CTData="CTDataObj3"></ChartTitle>
+          <ClearFix></ClearFix>
+          <HingeTable  v-if="resData" :tableData="resData"></HingeTable>
+        </div>
+        <div class="chart-r2-box">
+          <ChartTitle :CTData="CTDataObj4"></ChartTitle>
+          <ClearFix></ClearFix>
+          <HingeRankingTable :curLocation="curLocation"></HingeRankingTable>
+        </div>
+        <!--right-->
+      </div>
+      <!--返回按钮-->
+      <div class="return-btn" v-if="showReturnBtn" @click="clickReturnBtn">
+        <img src="../assets/返回icon.png" alt="">
+        <span>返回</span>
+      </div>
+    </div>
+    <!--来源去向-->
+    <LaiyuanTable></LaiyuanTable>
+    <!--底部tab-->
+    <BtmTab v-if="mapStatus===2" @showHingeName="handleShowHingeName" @changeHingePart="changeShowHingeType"></BtmTab>
+    <BtmChartBox v-if="mapStatus===3" @showLaiyuan="handleShowLaiyuan"></BtmChartBox>
   </div>
 </template>
 
 <script>
 import { utils, postData } from '../../../common'
-import echarts from 'echarts'
+//import echarts from 'echarts'
 import Header from '../../../component/Header.vue'
 import ChartTitle from '../../../component/ChartTitle.vue'
 import HingeTable from '../../../component/HingeTable.vue'
@@ -93,9 +99,16 @@ import Location from '../../../component/Location.vue'
 import BtmTab from '../../../component/BtmTab.vue'
 import BtmChartBox from '../../../component/BtmChartBox.vue'
 import PeopleNum from '../../../component/PeopleNum.vue'
+import PeopleNumC from '../../../component/PeopleNumC.vue'
 import Calender from '../../../component/Calendar.vue'
 import Linkage from '../../../component/Linkage.vue'
+import ClearFix from '../../../component/ClearFix.vue'
+import EchartAMap from '../../../component/EchartAMap.vue'
+import LaiyuanTable from '../../../component/LaiyuanTable.vue'
+import LaiyuanTab from '../../../component/LaiyuanTab.vue'
 import { theCitys, theCityData, rectangleDataObj } from '../../../common/mapData'
+import CityCodeMap from '../../../utils/CityCodeMap'
+import GpsUtil from '../../../utils/GpsUtil'
 import PlacePointView from '../../../common/data'
 import TrafficView from '../../../common/traffic'
 import MapBase from '../../../common/reli'
@@ -122,7 +135,15 @@ export default {
       showReturnBtn: false, // 返回按钮显示开关
       showChartL1: true, // 省界面 各行业人数分析表 显示开关
       positionInfoList: [], // 枢纽数据列表 名称 id等
-      showHingeName: true // 显示枢纽点名称 开关
+      showHingeName: true, // 显示枢纽点名称 开关
+      positionId: null, // 当前枢纽id
+      curDate: null, // 当前全局日期
+      showLaiyuan: false, // 显示来源去向
+      lineData: null, // 来源去向线数据
+      level: 1,
+      areaMod: 1,
+      colors: ['#ff5555', '#ff8155', '#ffc955', '#cafd4f', '#4ffd5f', '#4ffdca', '#4fe2fd', '#4f99fd', '#3b4dff', '#644cdb'],
+
     }
   },
   components: {
@@ -135,20 +156,27 @@ export default {
     BtmTab,
     AnalysisTable2,
     PeopleNum,
+    PeopleNumC,
     Calender,
     Linkage,
     AnalysisTable3,
-    BtmChartBox
+    BtmChartBox,
+    ClearFix,
+    EchartAMap,
+    LaiyuanTable,
+    LaiyuanTab
   },
   computed: {
     mapStatus () { // 地图状态 1代表省(默认) 2代表市 3代表区 跟随curLocation改变而改变
       const adcode = this.curLocation.adcode
       if (!adcode) { // 枢纽
         return 3
-      } else if (adcode !== 440000) { // 地市
+      } else if (adcode !== 440000 && adcode !== 100000) { // 地市
         return 2
-      } else { // 广东省
+      } else if (adcode === 440000) { // 广东省
         return 1
+      } else if (adcode === 100000) { // 全国
+        return 0
       }
     }
   },
@@ -156,6 +184,8 @@ export default {
     curLocation (newVal, oldVal) {
       console.log(`当前位置： ${newVal.name}`)
       this.preLocation = oldVal
+      window.curLocation = newVal
+      window.positionId = this.positionId = this.getPositionId()
       const status = this.mapStatus
       window.mapStatus = this.mapStatus
       window.traffic.removePaths() // 清除画的框
@@ -179,15 +209,23 @@ export default {
       this.switch2AreaNode(newVal.adcode)
       window.theMap.setPitch(45)
       this.getAreaFlowAndWarningList()
+    },
+    lineData (newValue, oldValue) {
+      if (newValue !== oldValue) {
+        this.refresh(newValue)
+      }
     }
   },
   mounted () {
     window.echarts = echarts
     window.mapbase = new MapBase()
-    this.initMap()
+//    this.initMap()
+    this.initChart()
     this.initDistrict()
+//    this.refresh({name: '', items: [{from: '广州', to: '北京', value: 1000}]})
   },
   created () {
+    this.setDate()
     this.getAreaFlowAndWarningList()
     this.getPositionInfoList()
   },
@@ -548,7 +586,56 @@ export default {
       window.pointControl = new PlacePointView(window.theMap)
       window.traffic = new TrafficView(window.theMap)
     },
-
+    initChart () {
+      var me = this
+      this.chartMap = window.echarts.init(this.$refs.chartMap)
+      this.chartMap.setOption({
+        backgroundColor: '',
+        title: {
+          text: '',
+          //subtext: '数据覆盖率',
+          left: 'center',
+          textStyle: {
+            color: '#fff'
+          }
+        },
+        tooltip: {
+          trigger: 'item'
+        },
+        amap: {
+          maxPitch: 60,
+          pitch: 45, //45 俯仰角
+          viewMode: '3D',
+          zoom: 7.5,
+          expandZoomRange: true,
+          mapStyle: 'amap://styles/785cdb67af60cfce35e24e8d6c56ed75', //地图主题
+          center: [113.275824, 22.994826], //中心点
+          rotation: 0,  //顺时针旋转角度
+          resizeEnable: true,
+          zooms: [7.5, 20], // 改变最大缩放等级
+          keyboardEnable: false,
+          layers: [
+            //satellite,
+            // building,
+            //roadNet
+          ],
+          defaultFeatures: ['bg', 'building', 'point']
+        },
+        animation: false,
+        series: []
+      })
+      window.theMap = this.chartMap.getModel().getComponent('amap').getAMap()
+      window.theMap.setFeatures(this.defaultFeatures)
+      var layer = this.chartMap.getModel().getComponent('amap').getLayer()
+      window.pointControl = new PlacePointView(window.theMap)
+      window.traffic = new TrafficView(window.theMap)
+      layer.render = function () {
+        var theOptions = me.chartMap.getOption()
+        me.chartMap.setOption({
+          series: theOptions.series
+        })
+      }
+    },
     /**
      * 设置背景的高度
      * @param height 头部高度
@@ -924,6 +1011,7 @@ export default {
 //          console.log(`${obj.city} 没有行政区号数据.`)
         }
       }
+      window.positionInfoList = this.positionInfoList
     },
     /**
      * 找城市的枢纽点
@@ -986,6 +1074,270 @@ export default {
           window.mapbase.drawReli(theName, 1000)
         }
       }
+    },
+    /**
+     * 日期改变
+     * @param date 日期 字符串
+     */
+    changeDate (date) {
+      this.curDate = date
+      window.curDate = date
+    },
+    /**
+     * 获取枢纽id
+     * @returns {*}
+     */
+    getPositionId () {
+      const theName = this.curLocation.name
+      let theId = null
+      for (let obj of this.positionInfoList) {
+        if (theName === obj.positionName) {
+          theId = obj.positionId
+          break
+        }
+      }
+      if (!theId) {
+        console.log(`没有对应id: ${theName}`)
+      }
+      return theId
+    },
+    /**
+     * 设置全局日期
+     */
+    setDate () {
+      let st = new Date()
+      let nowYear = st.getFullYear()
+      let nowMonth = st.getMonth() + 1
+      let nowDay = st.getDate()
+      this.curDate = nowYear + '-' + utils.add0(nowMonth) + '-' + utils.add0(nowDay)
+      window.curDate = this.curDate
+      window.testDate = '2019-06-25' // 测试用
+    },
+    /**
+     * 来演去向
+     * @param bool
+     */
+    handleShowLaiyuan (bool) {
+      this.showLaiyuan = bool
+    },
+    /*根据名字得到经纬度**/
+    geoCoordMap (name) {
+//      if (this.areaMod === 1) {
+//        let theCityCode = CityCodeMap.getCountyCode('广东省', this.cityName, name)
+//        //debugger;
+//        return GpsUtil.getByAreaCode(theCityCode)
+//      }
+//      else {
+//        return GpsUtil.getByCityName(name)
+//      }
+      return GpsUtil.getByCityName(name)
+
+    },
+    /**根据名称转换经纬度*/
+    convertData (data) {
+      var res = []
+      if (!data) {
+        return {
+          lines: [],
+          points: []
+        }
+      }
+      var theValidPoints = []
+      for (var i = 0; i < data.length; i++) {
+        var dataItem = data[i]
+        debugger
+        var fromCoord = this.geoCoordMap(dataItem.from)
+        var toCoord = this.geoCoordMap(dataItem.to)
+        if (fromCoord && toCoord) {
+          fromCoord = [parseFloat(fromCoord[0]), parseFloat(fromCoord[1])]
+          toCoord = [parseFloat(toCoord[0]), parseFloat(toCoord[1])]
+          var theLine = {
+            fromName: dataItem.from,
+            toName: dataItem.to,
+            coords: [fromCoord, toCoord],
+            //设置线段颜色
+            lineStyle: {
+              normal: {
+                color: this.colors[i > 10 ? 9 : i],
+                width: 2,
+                curveness: 0.2
+              }
+            }
+          }
+          theValidPoints.push(dataItem)
+          res.push(theLine)
+        }
+      }
+      return {
+        lines: res,
+        points: theValidPoints
+      }
+    },
+    /**根据数据进行呈现*/
+    refresh (data) {
+      debugger
+      var theMapName = data.name
+      // var theMapPath = this.getMapPath(theMapName);
+      var me = this
+//      if (this.mapName !== theMapName) {
+//        this.mapName = theMapName
+//        this.navigateAddress(this.amap, this.mapName)
+//      }
+      // debugger;
+      me.drawMap(data)
+
+    },
+    /**根据数据呈现到地图上*/
+    drawMap (data) {
+      // name
+      // from to value
+      var me = this
+      var theMapName = data.name
+      var theItems = data.items || []
+      var theMapHash = {}
+
+      var planePath = 'path://M1705.06,1318.313v-89.254l-319.9-221.799l0.073-208.063c0.521-84.662-26.629-121.796-63.961-121.491c-37.332-0.305-64.482,36.829-63.961,121.491l0.073,208.063l-319.9,221.799v89.254l330.343-157.288l12.238,241.308l-134.449,92.931l0.531,42.034l175.125-42.917l175.125,42.917l0.531-42.034l-134.449-92.931l12.238-241.308L1705.06,1318.313z'
+
+      var theConvertResult = this.convertData(data.items)
+
+      var thePoints = theConvertResult.points
+      var theLines = theConvertResult.lines
+
+      //var color = ['#a6c84c', '#ffa022', '#46bee9'];
+      var color = ['#49ffff']//
+      var series = []
+
+      series.push(
+        {
+          // name: item[0] + ' Top10',
+          type: 'lines',  //静态线
+          zlevel: 1,
+          'coordinateSystem': 'amap',
+          effect: {
+            show: false,
+            period: 6,
+            trailLength: 0.7,
+            color: '#49ffff',//'#fff',
+            symbolSize: 3
+          },
+          lineStyle: {
+            normal: {
+              color: '#49ffff',//color[i],
+              width: 1,
+              curveness: 0.2
+            }
+          },
+          data: theLines,
+        },
+        {
+          //name: item[0] + ' Top10',
+          type: 'lines',  //动态线
+          zlevel: 2,
+          'coordinateSystem': 'amap',
+          effect: {
+            show: true,
+            period: 6,
+            trailLength: 0.7,
+            color: '#fff',
+            symbol: 'arrow',
+            symbolSize: 5,
+            // shadowBlur: 10,
+          },
+          lineStyle: {
+            normal: {
+              color: color[0],
+              width: 1,
+              opacity: 0.5,
+              curveness: 0.2,
+              type: 'solid',
+              // shadowBlur: 5,
+              // shadowColor: color[i],
+            }
+          },
+          // emphasis: {
+          //   lineStyle: {
+          //     color: {
+          //       type: 'linear',
+          //       x: 0,
+          //       y: 0,
+          //       x2: 0,
+          //       y2: 1,
+          //       colorStops: [{
+          //           offset: 0, color: 'red' // 0% 处的颜色
+          //       }, {
+          //           offset: 1, color: 'blue' // 100% 处的颜色
+          //       }],
+          //       globalCoord: false // 缺省为 false
+          //     }
+          //   }
+          // },
+          symbol: ['none', 'arrow'],
+          symbolSize: 10,
+          data: theLines,
+
+        },
+        {
+          //name: item[0] + ' Top10',
+          type: 'effectScatter',
+          'coordinateSystem': 'amap',
+          // symbol:'emptyCircle',
+          // markPoint: {
+          //   symbol: 'circle',
+          //   data: [
+          //     {
+          //       name: '某个坐标',
+          //       coord: [110.365554,21.276724],
+          //       value:965,
+
+          //     }
+          //   ]
+          // },
+          //   animationDelayUpdate: function (idx) {
+          //     return 1000;
+          // },
+          effectType: 'ripple',
+
+          hoverAnimation: true,
+          // coordinateSystem: 'geo',
+          zlevel: 2,
+          rippleEffect: {
+            brushType: 'stroke'
+          },
+          label: {
+            normal: {
+              show: true,
+              position: 'right',
+              formatter: '{b}'
+            }
+          },
+          symbolSize: function (val) {
+            return 8 + (val[2] / 10000)
+          },
+          itemStyle: {
+            normal: {
+              color: color[0],
+              shadowBlur: 10,
+              shadowColor: '#333'
+            }
+          },
+          data: thePoints.map(function (dataItem) {
+            var theLngLatPoints = me.geoCoordMap(me.queryDirection == 1 ? dataItem.from : dataItem.to)
+            var thePoss = [parseFloat(theLngLatPoints[0]), parseFloat(theLngLatPoints[1])]
+            return {
+              name: me.queryDirection == 1 ? dataItem.from : dataItem.to,
+              value: thePoss.concat([dataItem.value])
+            }
+          }),
+        }
+      )
+      var option = {
+        series: series,
+
+      }
+
+      // this.chartMap.clear();
+      this.chartMap.setOption(option)
+
     }
   },
   beforeDestroy () {
@@ -1002,7 +1354,13 @@ export default {
     position: relative;
     z-index: 10;
   }
-
+  .mapview {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
   #container {
     width: 100%;
     height: 100%;
@@ -1022,11 +1380,6 @@ export default {
     position: relative;
     z-index: 1000;
     color: #ffffff;
-  }
-
-  .shadow-inset {
-    /*box-shadow: 3px 3px 3px rgba(80,241,255,0.5); // 选中的阴影*/
-    box-shadow: inset 0px 0px 5px 1px rgb(80, 241, 255); // 选中的阴影
   }
 
   .the-bg {

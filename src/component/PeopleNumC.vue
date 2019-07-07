@@ -16,37 +16,43 @@
       <span>万</span>
     </div>
     <!--比例-->
-    <!--<div class="proportion">-->
-      <!--<div class="p-inner">-->
-        <!--<div class="tb">-->
-          <!--<span>同比:</span>-->
-          <!--<span class="high">20% </span>-->
-          <!--<img src="../assert/同比icon_上升.png" alt="">-->
-        <!--</div>-->
-        <!--<div class="tb">-->
-          <!--<span>环比:</span>-->
-          <!--<span class="high">20% </span>-->
-          <!--<img src="../assert/同比icon_下降.png" alt="">-->
-        <!--</div>-->
-      <!--</div>-->
-    <!--</div>-->
+    <div class="proportion">
+      <div class="p-inner">
+        <div class="tb" v-if="tbObj">
+          <span>同比:</span>
+          <span :class="tbObj.cls">{{tbObj.val}} </span>
+          <img :src="tbObj.img" alt="">
+        </div>
+        <div class="tb" v-if="hbObj">
+          <span>环比:</span>
+          <span :class="hbObj.cls">{{hbObj.val}} </span>
+          <img :src="hbObj.img" alt="">
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
-import { utils } from '../common'
+import { utils, postData } from '../common'
 
 export default {
   data () {
     return {
       numFont: '全部枢纽实时总人数',
       numStrArr: null, // 人数字符串数组
-
+      areaFlowNum: null, // 人数
+      tbObj: null, // 同比
+      hbObj: null, // 环比
+      mapObj: {
+        high: require('../assert/同比icon_上升.png'),
+        low: require('../assert/同比icon_下降.png')
+      }
     }
   },
   props: {
-    areaFlowNum: {
-      type: Number,
+    positionId: { // 地点id
+      type: String,
       default: null
     }
   },
@@ -68,9 +74,43 @@ export default {
       let theNum = num
       this.numStrArr = utils.getStrArr(theNum)
     },
+    /**
+     * 处理比例
+     * @param str 比例字符串  tb: "7.14%", hb: "-3.23%",
+     */
+    handleProportion (str) {
+      let theStr = str
+      let theObj = {}
+      if (theStr.indexOf('-') !== -1) {
+        theObj['val'] = str.replace('-', '')
+        theObj['img'] = this.mapObj['low']
+        theObj['cls'] = 'low'
+      } else {
+        theObj['val'] = str
+        theObj['img'] = this.mapObj['high']
+        theObj['cls'] = 'high'
+      }
+      return theObj
+    },
+    getPositionFlowAndCompare () {
+      if (!this.positionId) {
+        console.log(`没有地点id: ${this.positionId}`)
+        return
+      }
+      const url = '/position/getPositionFlowAndCompare?positionId=' + this.positionId
+      const data = {}
+      postData(url, data).then((res) => {
+        console.log(res)
+        this.areaFlowNum = res.data.num
+        this.hbObj = this.handleProportion(res.data.hb)
+        this.tbObj = this.handleProportion(res.data.tb)
+      })
+    }
   },
 
-  created () {},
+  created () {
+    this.getPositionFlowAndCompare()
+  },
 
   mounted () {
     this.handleFlowNum(this.areaFlowNum)

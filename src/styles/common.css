@@ -101,3 +101,8 @@ html,body,#app {
   left: -10px;
   width: 200px;
 }
+/*内阴影*/
+.shadow-inset {
+  /*box-shadow: 3px 3px 3px rgba(80,241,255,0.5); // 选中的阴影*/
+  box-shadow: inset 0px 0px 5px 1px rgb(80, 241, 255);
+}
