@@ -57,14 +57,30 @@ export default {
   },
 
   computed: {},
-
+  props: {
+    curDate: { // 日历当前日期
+      type: String,
+      default: null
+    },
+    positionId: { // 当前地点id
+      type: String,
+      default: null
+    }
+  },
+  watch: {
+    curDate (newVal, oldVal) {
+      this.getPositionPortrait()
+    },
+    positionId (newVal, oldVal) {
+      this.getPositionPortrait()
+    }
+  },
   methods: {
     /**
      * 获取枢纽人群画像（性别、年龄、籍贯、消费能力）
      */
     getPositionPortrait () {
-      //      const url = `/position/getPositionFlowTrend?positionId=${window.positionId}&countDate=${window.curDate}`
-      const url = `/position/getPositionPortrait?positionId=${window.positionId}&countDate=${window.testDate}`
+      const url = `/position/getPositionPortrait?positionId=${window.positionId}&countDate=${window.curDate}`
       postData(url, {}).then((res) => {
         console.log(res)
         let positionSexList = res.data.positionSexList // 性别
@@ -101,7 +117,9 @@ export default {
      * @param data 数据
      */
     initChart1 (data) {
-      this.chart1 = echarts.init(this.$refs['chart1'])
+      if (!this.chart1) {
+        this.chart1 = echarts.init(this.$refs['chart1'])
+      }
       let legend1 = '男'
       let legend2 = '女'
       let option = {
@@ -147,7 +165,9 @@ export default {
      * @param data 数组
      */
     initChart2 (data) {
-      this.chart2 = echarts.init(this.$refs['chart2'])
+      if (!this.chart2) {
+        this.chart2 = echarts.init(this.$refs['chart2'])
+      }
       let me = this
       let option = {
         title: {
@@ -211,7 +231,9 @@ export default {
      * @param data 数组
      */
     initChart3 (data) {
-      this.chart3 = echarts.init(this.$refs['chart3'])
+      if (!this.chart3) {
+        this.chart3 = echarts.init(this.$refs['chart3'])
+      }
       let me = this
       let option = {
         title: {

@@ -13,14 +13,13 @@
       <div class="bc-main">
         <div class="main-top">
           <!--客流监测-->
-          <BtmChartTab1 v-if="activeTab===0 && activeId===0"></BtmChartTab1>
+          <BtmChartTab1 v-if="activeTab===0 && activeId===0" :positionId="positionId" :curDate="curDate"></BtmChartTab1>
           <!--人群画像-->
-          <BtmChartTab2 v-if="activeTab===0 && activeId===1"></BtmChartTab2>
+          <BtmChartTab2 v-if="activeTab===0 && activeId===1" :positionId="positionId"></BtmChartTab2>
           <!--历史客流-->
-          <BtmChartTab3 v-if="activeTab===1 && activeId===0"></BtmChartTab3>
-          <!--来源去向 todo-->
+          <BtmChartTab3 v-if="activeTab===1 && activeId===0" :positionId="positionId"></BtmChartTab3>
           <!--历史画像-->
-          <BtmChartTab4 v-if="activeTab===1 && activeId===1"></BtmChartTab4>
+          <BtmChartTab4 v-if="activeTab===1 && activeId===1" :positionId="positionId" :curDate="curDate"></BtmChartTab4>
         </div>
         <div class="main-btm">
           <div class="main-btm-inner">
@@ -88,6 +87,14 @@ export default {
     }
   },
   props: {
+    curDate: { // 日历当前日期
+      type: String,
+      default: null
+    },
+    positionId: { // 当前地点id
+      type: String,
+      default: null
+    }
   },
   components: {
     BtmChartTab1,
@@ -105,10 +112,11 @@ export default {
      */
     clickTab (i) {
       this.activeId = i
-      if (i === 1 && this.activeTab === 2) { // 点击的是来源去向
+      if (i === 2 && this.activeTab === 1) { // 点击的是来源去向
         this.$emit('showLaiyuan', true)
       } else {
         this.$emit('showLaiyuan', false)
+//        this.moveToPoint()
       }
     },
     /**
@@ -119,7 +127,25 @@ export default {
       i === 0 ? this.dataObj = this.dataObj1 : this.dataObj = this.dataObj2
       this.activeTab = i
       this.activeId = 0 // 重置为0
-    }
+    },
+    /**
+     * 点击枢纽点后 移动放大到枢纽
+     */
+    moveToPoint () {
+      window.districtExplorer.clearFeaturePolygons()
+      let theName = window.curLocation.name
+      for (let obj of window.positionInfoList) {
+        if (theName === obj.positionName) {
+          let lng = obj.lnglat.split(',')[0]
+          let lat = obj.lnglat.split(',')[1]
+          let arg = [parseFloat(lng), parseFloat(lat)]
+          let theZoom = 18
+          window.pointControl.MoveToPoint(arg, theZoom)
+          window.traffic.drawTheRectangle(obj.rectData)
+          window.mapbase.drawReli(theName, 1000) // todo 传枢纽点人数
+        }
+      }
+    },
   },
 
   created () {},

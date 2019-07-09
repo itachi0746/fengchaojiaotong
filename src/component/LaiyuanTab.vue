@@ -51,7 +51,7 @@ export default {
   position: absolute;
   top: 26px;
   /*left: 252px;*/
-  left: 510px;
+  left: 525px;
   z-index: 10;
   /*background: rgba(47, 165, 255, 0.3);*/
   font-size: 22px;
@@ -65,7 +65,7 @@ export default {
     height: 100%;
     margin-right: 16px;
     background-color: #2a91e8;
-    padding: 5px;
+    padding: 3px;
     @include borderBox()
   }
   .l-tab2 {
@@ -89,10 +89,10 @@ export default {
     border-radius: 5px;
   }
   .tab-item.active {
-    background-color: #1f3ce8;
+    background-color: #054881;
   }
   .tab-item2.active {
-    background-color: #1f3ce8;
+    background-color: #054881;
   }
   .inner {
     width: 100%;

@@ -5,19 +5,33 @@
         <div class="logo-img"></div>
         <span>蜂巢交通平台</span>
       </div>
-      <div :class="['tab', 'cp', {'active': activeId===1}]" @click="clickTab(1)">
-        实时交通监测
-        <div class="sanjiao" v-if="activeId===1"></div>
+      <!--<div :class="['tab', 'cp', {'active': activeId===1}]" @click="clickTab(1)">-->
+        <!--实时交通监测-->
+        <!--<div class="sanjiao" v-if="activeId===1"></div>-->
+      <!--</div>-->
+      <!--<div class="tab-line"></div>-->
+      <!--<div :class="['tab', 'cp', {'active': activeId===2}]" @click="clickTab(2)">-->
+        <!--市内交通规划-->
+        <!--<div class="sanjiao" v-if="activeId===2"></div>-->
+      <!--</div>-->
+      <!--<div class="tab-line"></div>-->
+      <!--<div :class="['tab', 'cp', {'active': activeId===3}]" @click="clickTab(3)">-->
+        <!--跨市迁徙分析-->
+        <!--<div class="sanjiao" v-if="activeId===3"></div>-->
+      <!--</div>-->
+      <div :class="['tab', 'cp', {'active': activeId==1}]" @click="clickTab(1)" v-if="jiance==true">
+        {{jiance_text}}
+        <div class="sanjiao" v-if="activeId==1"></div>
       </div>
-      <div class="tab-line"></div>
-      <div :class="['tab', 'cp', {'active': activeId===2}]" @click="clickTab(2)">
-        市内交通规划
-        <div class="sanjiao" v-if="activeId===2"></div>
+      <div class="tab-line"  v-if="guihua==true"></div>
+      <div :class="['tab', 'cp', {'active': activeId==2}]" @click="clickTab(2)" v-if="guihua==true">
+        {{guihua_text}}
+        <div class="sanjiao" v-if="activeId==2"></div>
       </div>
-      <div class="tab-line"></div>
-      <div :class="['tab', 'cp', {'active': activeId===3}]" @click="clickTab(3)">
-        跨市迁徙分析
-        <div class="sanjiao" v-if="activeId===3"></div>
+      <div class="tab-line"  v-if="fenxi==true"></div>
+      <div :class="['tab', 'cp', {'active': activeId==3}]" @click="clickTab(3)" v-if="fenxi==true">
+        {{fenxi_text}}
+        <div class="sanjiao" v-if="activeId==3"></div>
       </div>
       <div class="time-box">
         <span>{{nowYear}}</span>
@@ -32,7 +46,7 @@
         <div class="right1">
           <div class="r-btn cp"></div>
         </div>
-        <div class="right2">
+        <div class="right2" @click="gotoLogin">
           <div class="people"></div>
         </div>
       </div>
@@ -51,26 +65,64 @@ export default {
       nowMonth: null,
       nowDay: null,
       nowTime: null,
-      timer: null
+      timer: null,
+      jiance: false,
+      guihua: false,
+      fenxi: false,
+      jiance_text: "",
+      guihua_text: "",
+      fenxi_text: "",
+      appname:''
     }
   },
 
   components: {},
 
   computed: {},
-
+  watch: {
+//    customActiveId(newVaue, oldValue) {
+//      if (newVaue != oldValue) {
+//        this.activeId = newVaue;
+//      }
+//
+//    }
+  },
   methods: {
+    loadPriv() {
+      var theMenuList = window.menuList;
+      if (theMenuList && theMenuList.length > 0) {
+        for (var i = 0; i < theMenuList.length; i++) {
+          var theMenu = theMenuList[i];
+          if (theMenu.url == "index.html") {
+            this.jiance = true;
+            this.jiance_text = theMenu.text;
+          }
+          if (theMenu.url == "tqfx.html"||theMenu.url == "zzfx.html") {
+            this.guihua = true;
+            this.guihua_text = theMenu.text;
+          }
+          if (theMenu.url == "qxdc.html"||theMenu.url == "kstq.html") {
+            this.fenxi = true;
+            this.fenxi_text =theMenu.text;
+          }
+        }
+      }
+
+    },
     clickTab (id) {
       this.activeId = id
       if (id === 1) {
-        window.gotoPage('index.html')
+        window.GotoPage('index.html')
       }
       if (id === 2) {
-        window.gotoPage('tqfx.html')
+        window.GotoPage('tqfx.html')
       }
       if (id === 3) {
-        window.gotoPage('qxdc.html')
+        window.GotoPage('qxdc.html')
       }
+    },
+    gotoLogin(){
+      window.GotoPage('login.html')
     },
     /**
      * 发送高度
@@ -98,6 +150,20 @@ export default {
     this.handleTime()
     let me = this
     this.timer = setInterval(me.handleTime, 1000)
+    this.loadPriv();
+
+//    this.activeId = this.customActiveId;
+    if(this.activeId==1){
+      window.moduleNmae=this.jiance_text;// "实时交通监测";
+    }
+    if(this.activeId==2){
+      window.moduleNmae=this.guihua_text;// "市内交通规划";
+    }
+    if(this.activeId==3){
+      window.moduleNmae=this.fenxi_text;// "跨市迁徙分析";
+    }
+    this.appname=window.appname;
+
   },
 
   beforeDestroy () {

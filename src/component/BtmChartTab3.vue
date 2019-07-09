@@ -28,7 +28,17 @@ export default {
     ChartTitle,
     ClearFix
   },
-
+  props: {
+    positionId: { // 当前地点id
+      type: String,
+      default: null
+    }
+  },
+  watch: {
+    positionId (newVal, oldVal) {
+      this.getPositionFlowHistoryTrend()
+    }
+  },
   computed: {},
 
   methods: {
@@ -36,7 +46,6 @@ export default {
      * 获取枢纽历史客流趋势
      */
     getPositionFlowHistoryTrend () {
-      //      const url = `/position/getPositionFlowTrend?positionId=${window.positionId}&countDate=${window.curDate}`
       const url = `/position/getPositionFlowHistoryTrend?positionId=${window.positionId}`
       postData(url, {}).then((res) => {
         console.log(res)
@@ -63,7 +72,9 @@ export default {
      * @param totalData 总人数 数组
      */
     initChart1 (arrivalData, leaveData, totalData) {
-      this.chart1 = echarts.init(this.$refs['chart1'])
+      if (!this.chart1) {
+        this.chart1 = echarts.init(this.$refs['chart1'])
+      }
       let me = this
       let legend1 = '出发旅客'
       let legend2 = '到达旅客'

@@ -54,17 +54,36 @@ export default {
     ChartTitle,
     ClearFix
   },
-  props: {
-  },
   computed: {},
+  props: {
+    curDate: { // 日历当前日期
+      type: String,
+      default: null
+    },
+    positionId: { // 当前地点id
+      type: String,
+      default: null
+    }
+  },
+  watch: {
+    curDate (newVal, oldVal) {
+      this.getPositionFlowTrend()
+      this.getPositionInAndOutTrend()
+      this.getPositionLinger()
+    },
+    positionId (newVal, oldVal) {
+      this.getPositionFlowTrend()
+      this.getPositionInAndOutTrend()
+      this.getPositionLinger()
+    }
+  },
 
   methods: {
     /**
      * 获取实时客流量
      */
     getPositionFlowTrend () {
-      //      const url = `/position/getPositionFlowTrend?positionId=${window.positionId}&countDate=${window.curDate}`
-      const url = `/position/getPositionFlowTrend?positionId=${window.positionId}&countDate=${window.testDate}`
+      const url = `/position/getPositionFlowTrend?positionId=${window.positionId}&countDate=${window.curDate}`
       postData(url, {}).then((res) => {
         console.log(res)
         let d = []
@@ -81,8 +100,7 @@ export default {
      * 实时人口变化
      */
     getPositionInAndOutTrend () {
-      //      const url = `/position/getPositionInAndOutTrend?positionId=${window.positionId}&countDate=${window.curDate}`
-      const url = `/position/getPositionInAndOutTrend?positionId=${window.positionId}&countDate=${window.testDate}`
+      const url = `/position/getPositionInAndOutTrend?positionId=${window.positionId}&countDate=${window.curDate}`
       postData(url, {}).then((res) => {
         console.log(res)
         let inArr = []
@@ -108,8 +126,7 @@ export default {
      * 获取枢纽驻留时长
      */
     getPositionLinger () {
-      //      const url = `/position/getPositionInAndOutTrend?positionId=${window.positionId}&countDate=${window.curDate}`
-      const url = `/position/getPositionLinger?positionId=${window.positionId}&countDate=${window.testDate}`
+      const url = `/position/getPositionLinger?positionId=${window.positionId}&countDate=${window.curDate}`
       postData(url, {}).then((res) => {
         console.log(res)
         let realTimeList = []
@@ -136,7 +153,9 @@ export default {
      * @param data 数据
      */
     initChart1 (data) {
-      this.chart1 = echarts.init(this.$refs['chart1'])
+      if (!this.chart1) {
+        this.chart1 = echarts.init(this.$refs['chart1'])
+      }
       let me = this
       let option = {
         title: {
@@ -246,7 +265,9 @@ export default {
      * @param outData 离开人数数组
      */
     initChart2 (inData, outData) {
-      this.chart2 = echarts.init(this.$refs['chart2'])
+      if (!this.chart2) {
+        this.chart2 = echarts.init(this.$refs['chart2'])
+      }
       let me = this
       let legend1 = '进入人数'
       let legend2 = '离开人数'
@@ -364,7 +385,9 @@ export default {
      * @param historyData 历史驻留数组
      */
     initChart3 (realTimeData, historyData) {
-      this.chart3 = echarts.init(this.$refs['chart3'])
+      if (!this.chart3) {
+        this.chart3 = echarts.init(this.$refs['chart3'])
+      }
       let me = this
       let legend1 = '实时'
       let legend2 = '近30日'
@@ -381,7 +404,12 @@ export default {
           }
         },
         legend: {
-          data: [legend1, legend2]
+          data: [legend1, legend2],
+          textStyle: {
+            color: 'rgb(255,255,255)',
+            fontSize: 15,
+            fontFamily: 'Microsoft YaHei'
+          }
         },
         grid: {
           left: '3%',

@@ -16,7 +16,7 @@
       <span>万</span>
     </div>
     <!--比例-->
-    <div class="proportion">
+    <div class="proportion" v-if="showP">
       <div class="p-inner">
         <div class="tb" v-if="tbObj">
           <span>同比:</span>
@@ -47,18 +47,26 @@ export default {
       mapObj: {
         high: require('../assert/同比icon_上升.png'),
         low: require('../assert/同比icon_下降.png')
-      }
+      },
+      showP: true // 显示同比
     }
   },
   props: {
     positionId: { // 地点id
       type: String,
       default: null
+    },
+    showLaiyuan: { // 显示来源去向时  不显示同比
+      type: Boolean,
+      default: null
     }
   },
   watch: {
     areaFlowNum (newVal, oldVal) {
       this.handleFlowNum(newVal)
+    },
+    showLaiyuan (newVal, oldVal) {
+      this.showP = !newVal
     }
   },
 
@@ -109,6 +117,7 @@ export default {
   },
 
   created () {
+    this.showP = true
     this.getPositionFlowAndCompare()
   },
 

@@ -11,14 +11,14 @@
     <div class="main-box cd">
       <div class="the-bg bg-l" :style="{height: bgHeight}">
         <!--left-->
-        <Location @changeLocation="changeLocation" :curLocation="curLocation"></Location>
+        <Location @changeLocation="changeLocation" :curLocation="curLocation" :mapStatus="mapStatus"></Location>
         <Calender v-if="mapStatus===3" @changeDate="changeDate" :curDate="curDate"></Calender>
-        <LaiyuanTab></LaiyuanTab>
+        <!--<LaiyuanTab v-if="mapStatus===3 && showLaiyuan"></LaiyuanTab>-->
         <!--人数组件-->
         <PeopleNum v-if="resData && mapStatus!==3" :areaFlowNum="resData.areaFlow.num"></PeopleNum>
         <!--人数+比例组件-->
-        <PeopleNumC v-if="mapStatus===3" :positionId="positionId"></PeopleNumC>
-        <Linkage v-if="mapStatus===3"></Linkage>
+        <PeopleNumC v-if="mapStatus===3" :positionId="positionId" :showLaiyuan="showLaiyuan"></PeopleNumC>
+        <Linkage v-if="mapStatus===3 && !showLaiyuan"></Linkage>
         <div class="chart-l1-box" v-if="mapStatus!==3">
           <ChartTitle :CTData="CTDataObj1"></ChartTitle>
           <ClearFix></ClearFix>
@@ -76,18 +76,19 @@
         <img src="../assets/返回icon.png" alt="">
         <span>返回</span>
       </div>
+      <!--来源去向-->
+      <LaiyuanTable v-if="mapStatus===3 && showLaiyuan" :positionId="positionId" :curDate="curDate" @drawLine="drawLine"></LaiyuanTable>
     </div>
-    <!--来源去向-->
-    <LaiyuanTable></LaiyuanTable>
+
     <!--底部tab-->
     <BtmTab v-if="mapStatus===2" @showHingeName="handleShowHingeName" @changeHingePart="changeShowHingeType"></BtmTab>
-    <BtmChartBox v-if="mapStatus===3" @showLaiyuan="handleShowLaiyuan"></BtmChartBox>
+    <!--底部图表-->
+    <BtmChartBox v-if="mapStatus===3" @showLaiyuan="handleShowLaiyuan" :curDate="curDate" :positionId="positionId"></BtmChartBox>
   </div>
 </template>
 
 <script>
 import { utils, postData } from '../../../common'
-//import echarts from 'echarts'
 import Header from '../../../component/Header.vue'
 import ChartTitle from '../../../component/ChartTitle.vue'
 import HingeTable from '../../../component/HingeTable.vue'
@@ -143,6 +144,7 @@ export default {
       level: 1,
       areaMod: 1,
       colors: ['#ff5555', '#ff8155', '#ffc955', '#cafd4f', '#4ffd5f', '#4ffdca', '#4fe2fd', '#4f99fd', '#3b4dff', '#644cdb'],
+      scope: null // 1:省内 2:省外 3:境外   来源去向的tab状态记录
 
     }
   },
@@ -222,7 +224,7 @@ export default {
 //    this.initMap()
     this.initChart()
     this.initDistrict()
-//    this.refresh({name: '', items: [{from: '广州', to: '北京', value: 1000}]})
+//    this.refresh({name: '', items: [{from: '广州南站', to: '北京', value: 1000}]})
   },
   created () {
     this.setDate()
@@ -557,7 +559,7 @@ export default {
 
         // 默认切到广东
         switch2AreaNode(440000)
-        //        switch2AreaNode(100000)
+//                switch2AreaNode(100000)
       })
     },
     /**
@@ -612,7 +614,7 @@ export default {
           center: [113.275824, 22.994826], //中心点
           rotation: 0,  //顺时针旋转角度
           resizeEnable: true,
-          zooms: [7.5, 20], // 改变最大缩放等级
+          zooms: [4.5, 20], // 改变最大缩放等级
           keyboardEnable: false,
           layers: [
             //satellite,
@@ -681,7 +683,7 @@ export default {
         '轻度预警': require('../assets/枢纽点_轻度_正常.png'),
         '中度预警': require('../assets/枢纽点_中度_正常.png'),
         '重度预警': require('../assets/枢纽点_重度_正常.png'),
-        '舒适': ''
+        '舒适': '' // todo 没有图片
       }
       let thePoint = document.createElement('div')
       let infoDiv = document.createElement('div')
@@ -695,7 +697,12 @@ export default {
       infoDiv.className = 'hinge-name'
       infoDiv.style.display = this.showHingeName ? 'block' : 'none' // 根据状态显示隐藏
       hoverDiv.className = 'hinge-hover'
-      img.src = imgObj[dataObj.status]
+//      debugger
+      if (dataObj.status) {
+        img.src = imgObj[dataObj.status]
+      } else { // todo 没有状态 默认图片
+        img.src = imgObj['轻度预警']
+      }
       infoDiv.innerHTML = dataObj.positionName
       line1.innerHTML = dataObj.positionName
       line2.innerHTML = `实时总人数: ${utils.num2Wan(dataObj.totalNum)}万`
@@ -927,7 +934,6 @@ export default {
      * 点击返回按钮
      */
     clickReturnBtn () {
-//      this.curLocation = this.preLocation
       const status = this.mapStatus
       window.mapStatus = this.mapStatus
       if (status === 1) { // 省
@@ -936,11 +942,13 @@ export default {
         this.curLocation = {name: '全部市', adcode: 440000}
       } else { // 枢纽 返回市视图
         const theName = this.curLocation.name
+        this.showLaiyuan = false // 隐藏来源去向
         for (let pos of this.positionInfoList) {
           if (theName === pos.positionName) { // 找到枢纽
             this.curLocation = {name: pos.city, adcode: pos.adcode}
           }
         }
+        this.lineData = {name: '', items: []} // 清除航线
       }
     },
     /**
@@ -1071,7 +1079,7 @@ export default {
           let theZoom = 18
           window.pointControl.MoveToPoint(arg, theZoom)
           window.traffic.drawTheRectangle(obj.rectData)
-          window.mapbase.drawReli(theName, 1000)
+          window.mapbase.drawReli(theName, 1000) // todo 传枢纽点人数
         }
       }
     },
@@ -1145,7 +1153,7 @@ export default {
       var theValidPoints = []
       for (var i = 0; i < data.length; i++) {
         var dataItem = data[i]
-        debugger
+//        debugger
         var fromCoord = this.geoCoordMap(dataItem.from)
         var toCoord = this.geoCoordMap(dataItem.to)
         if (fromCoord && toCoord) {
@@ -1175,7 +1183,6 @@ export default {
     },
     /**根据数据进行呈现*/
     refresh (data) {
-      debugger
       var theMapName = data.name
       // var theMapPath = this.getMapPath(theMapName);
       var me = this
@@ -1185,7 +1192,6 @@ export default {
 //      }
       // debugger;
       me.drawMap(data)
-
     },
     /**根据数据呈现到地图上*/
     drawMap (data) {
@@ -1203,6 +1209,19 @@ export default {
       var thePoints = theConvertResult.points
       var theLines = theConvertResult.lines
 
+      var thePintHash = {};
+      var theValidPoints = [];
+      for (var i = 0; i < thePoints.length; i++) {
+        var thePoint = thePoints[i];
+        if (!thePintHash[thePoint.from]) {
+          thePintHash[thePoint.from] = true;
+          theValidPoints.push(thePoint.from);
+        }
+        if (!thePintHash[thePoint.to]) {
+          thePintHash[thePoint.to] = true;
+          theValidPoints.push(thePoint.to);
+        }
+      }
       //var color = ['#a6c84c', '#ffa022', '#46bee9'];
       var color = ['#49ffff']//
       var series = []
@@ -1320,24 +1339,54 @@ export default {
               shadowColor: '#333'
             }
           },
-          data: thePoints.map(function (dataItem) {
-            var theLngLatPoints = me.geoCoordMap(me.queryDirection == 1 ? dataItem.from : dataItem.to)
-            var thePoss = [parseFloat(theLngLatPoints[0]), parseFloat(theLngLatPoints[1])]
+          data: theValidPoints.map(function (dataItem) {
+//            var theLngLatPoints = me.geoCoordMap(me.queryDirection == 1 ? dataItem.from : dataItem.to)
+//            var thePoss = [parseFloat(theLngLatPoints[0]), parseFloat(theLngLatPoints[1])]
+//            return {
+//              name: me.queryDirection == 1 ? dataItem.from : dataItem.to,
+//              value: thePoss.concat([dataItem.value])
+//            }
+            var theLngLatPoints = me.geoCoordMap(dataItem);
+            var thePoss = [parseFloat(theLngLatPoints[0]), parseFloat(theLngLatPoints[1])];
             return {
-              name: me.queryDirection == 1 ? dataItem.from : dataItem.to,
-              value: thePoss.concat([dataItem.value])
-            }
+              name: dataItem,
+              value: thePoss.concat([10])
+            };
           }),
         }
       )
       var option = {
-        series: series,
-
+        series: series
       }
 
       // this.chartMap.clear();
       this.chartMap.setOption(option)
 
+    },
+    /**
+     * 画线方法
+     * @param dataobj
+     */
+    drawLine (dataobj) {
+//      debugger
+      this.lineData = dataobj
+      this.scope = dataobj.scope // 1:省内 2:省外 3:境外
+      if (this.scope === '1') {
+        this.switch2AreaNode(440000)
+      } else if (this.scope === '2') {
+        this.switch2AreaNode(100000)
+      } else {
+
+      }
+      this.drawLineCB()
+    },
+    /**
+     * 画航线后的回调
+     */
+    drawLineCB () {
+      window.mapbase.removeReli() // 去除热力
+      let theCenter = [117.474401, 38.741769] // 设置中心
+      window.theMap.setCenter(theCenter)
     }
   },
   beforeDestroy () {

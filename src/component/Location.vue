@@ -6,7 +6,7 @@
     <img class="img2" src="../assert/内容区_地市选择下拉icon.png" alt="">
     <div class="loc-list" v-if="showList">
       <ul>
-        <li v-for="(item,index) in posList" :key="index" @click.stop="clickLi(item.name, item.adcode)">{{item.name}}</li>
+        <li v-for="(item,index) in posList" :key="index" @click.stop="clickLi(item[theKey], item.adcode)">{{item[theKey]}}</li>
       </ul>
     </div>
   </div>
@@ -20,7 +20,8 @@ export default {
       showList: false, // 显示列表的开关
       posList: null, // 地点列表
 //      curLocation: {name: '全部市', adcode: 440000},
-      theLocation: null
+      theLocation: null,
+      theKey: 'name'
     }
   },
 
@@ -29,11 +30,30 @@ export default {
     curLocation: {
       type: Object,
       default: null
+    },
+    mapStatus: { // 地图状态
+      type: Number,
+      default: null
     }
   },
   watch: {
     curLocation (newVal, oldVal) {
       this.theLocation = newVal
+    },
+    mapStatus (newVal, oldVal) {
+      if (newVal === 1) {
+        this.posList = theCityData
+//        this.theKey = 'name'
+      } else if (newVal === 2) {
+        this.posList = this.getCityHinge()
+        try {
+          let theName = getDefaultCity()
+          this.theLocation = {name: theName, adcode: ''}
+        } catch (err) {
+          console.log(err)
+        }
+//        this.theKey = 'positionName'
+      }
     }
   },
 
@@ -55,15 +75,58 @@ export default {
       this.theLocation = {name: name, adcode: adcode}
       this.showList = false
       this.$emit('changeLocation', this.theLocation)
+    },
+    /**
+     * 获取城市列表
+     */
+    getCityList () {
+      const moduleName = '实时交通监测'
+      let theList = getCitys(moduleName)
+//      debugger
+      if (!theList.length) {
+        console.log('没有城市列表')
+        return
+      }
+//      console.log(theList)
+      let positionArr = []
+      for (let item of theList) {
+        for (let obj of theCityData) {
+          if (item === obj.name) {
+            positionArr.push(obj)
+            break
+          }
+        }
+//        positionArr.push({name: item})
+      }
+      return positionArr
+    },
+    /**
+     * 获取城市的枢纽点数据
+     */
+    getCityHinge () {
+      const theName = this.curLocation.name
+      let me = this
+      let theKey = me.theKey
+      let theArr = []
+      for (let obj of window.positionInfoList) {
+        if (obj.city === theName) {
+          let theObj = {}
+          theObj[theKey] = obj.positionName
+          theObj['adcode'] = ''
+          theArr.push(theObj) // 枢纽点没有adcode
+        }
+      }
+      return theArr
     }
   },
 
   created () {
     this.theLocation = this.curLocation
+    this.posList = this.getCityList()
   },
 
   mounted () {
-    this.posList = theCityData
+//    this.posList = theCityData
   },
 
   beforeDestroy () {}
