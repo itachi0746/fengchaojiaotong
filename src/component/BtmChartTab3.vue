@@ -107,6 +107,13 @@ export default {
 //            }
 //          }
         },
+        grid: {
+          left: '10%',
+          right: '10%',
+          bottom: '15%',
+          top: '15%',
+//          containLabel: true
+        },
         xAxis: {
           type: 'category',
           boundaryGap: false,

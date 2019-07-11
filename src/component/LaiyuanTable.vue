@@ -30,7 +30,6 @@
       </div>
     </div>
     <!--切换tab-->
-    <!--<LaiyuanTab></LaiyuanTab>-->
     <!--来源去向 省内省外tab-->
     <div class="l-tab">
       <div class="l-tab1 shadow-inset">
@@ -48,7 +47,6 @@
 </template>
 <script>
 
-import LaiyuanTab from './LaiyuanTab.vue'
 import {utils, postData} from '../common'
 export default {
   data () {
@@ -75,7 +73,6 @@ export default {
   },
 
   components: {
-    LaiyuanTab
   },
   props: {
     curDate: { // 日历当前日期

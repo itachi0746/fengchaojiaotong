@@ -1,11 +1,13 @@
 <template>
   <div class="index">
+    <!--头部-->
+    <Header @getHeaderHeight="getHeaderHeight"></Header>
     <!--地图容器-->
+    <div class="container" id="container1"></div>
+
     <div ref="chartMap" class="mapview" id="mapview">
 
     </div>
-    <!--头部-->
-    <Header @getHeaderHeight="getHeaderHeight"></Header>
 
     <!--主要内容区域-->
     <div class="main-box cd">
@@ -13,7 +15,6 @@
         <!--left-->
         <Location @changeLocation="changeLocation" :curLocation="curLocation" :mapStatus="mapStatus"></Location>
         <Calender v-if="mapStatus===3" @changeDate="changeDate" :curDate="curDate"></Calender>
-        <!--<LaiyuanTab v-if="mapStatus===3 && showLaiyuan"></LaiyuanTab>-->
         <!--人数组件-->
         <PeopleNum v-if="resData && mapStatus!==3" :areaFlowNum="resData.areaFlow.num"></PeopleNum>
         <!--人数+比例组件-->
@@ -106,7 +107,6 @@ import Linkage from '../../../component/Linkage.vue'
 import ClearFix from '../../../component/ClearFix.vue'
 import EchartAMap from '../../../component/EchartAMap.vue'
 import LaiyuanTable from '../../../component/LaiyuanTable.vue'
-import LaiyuanTab from '../../../component/LaiyuanTab.vue'
 import { theCitys, theCityData, rectangleDataObj } from '../../../common/mapData'
 import CityCodeMap from '../../../utils/CityCodeMap'
 import GpsUtil from '../../../utils/GpsUtil'
@@ -129,6 +129,7 @@ export default {
       normalHinge: null, // 正常枢纽数
       warningHinge: null, // 告警枢纽数
       curLocation: {name: '全部市', adcode: 440000}, // 当前位置, 默认全部(广东省)
+//      curLocation: null, // 当前位置, 默认全部(广东省)
       preLocation: null, // 记录上一个位置
       cityMarkers: [], // 存放地图标记点(城市)
       hingeMarkers: [], // 存放地图标记点(枢纽)
@@ -166,7 +167,6 @@ export default {
     ClearFix,
     EchartAMap,
     LaiyuanTable,
-    LaiyuanTab
   },
   computed: {
     mapStatus () { // 地图状态 1代表省(默认) 2代表市 3代表区 跟随curLocation改变而改变
@@ -212,7 +212,7 @@ export default {
       window.theMap.setPitch(45)
       this.getAreaFlowAndWarningList()
     },
-    lineData (newValue, oldValue) {
+    lineData (newValue, oldValue) { // 画航线的数据
       if (newValue !== oldValue) {
         this.refresh(newValue)
       }
@@ -222,16 +222,61 @@ export default {
     window.echarts = echarts
     window.mapbase = new MapBase()
 //    this.initMap()
-    this.initChart()
-    this.initDistrict()
-//    this.refresh({name: '', items: [{from: '广州南站', to: '北京', value: 1000}]})
+//    window.onload = () => {
+//      setTimeout(() => {
+//        this.initChart()
+//        this.initDistrict()
+//        this.setDate()
+//        this.getAreaFlowAndWarningList()
+//        this.getPositionInfoList()
+//      }, 3000)
+
+//    }
+    var me = this
+    var map = new AMap.Map("container1", {
+      maxPitch: 60,
+      pitch: 45, //45 俯仰角
+      viewMode: '3D',
+      zoom: 7.5,
+      expandZoomRange: true,
+      mapStyle: 'amap://styles/785cdb67af60cfce35e24e8d6c56ed75', //地图主题
+      center: [113.275824, 22.994826], //中心点
+      rotation: 0,  //顺时针旋转角度
+      resizeEnable: true,
+      zooms: [4.5, 20], // 改变最大缩放等级
+      keyboardEnable: false,
+      layers: [
+        //satellite,
+        // building,
+        //roadNet
+      ],
+      defaultFeatures: ['bg', 'building', 'point']
+    });
+    map.on('complete', function() {
+//      document.getElementById('tip').innerHTML = "地图图块加载完毕！当前地图中心点为：" + map.getCenter();
+      me.initApp()
+    });
+
+
+//    this.curLocation = {name: '全部市', adcode: 440000}
+//    this.setDate()
+//    this.getAreaFlowAndWarningList()
+//    this.getPositionInfoList()
+    //    this.refresh({name: '', items: [{from: '广州南站', to: '北京', value: 1000}]})
   },
   created () {
-    this.setDate()
-    this.getAreaFlowAndWarningList()
-    this.getPositionInfoList()
+//    this.setDate()
+//          this.getAreaFlowAndWarningList()
+//          this.getPositionInfoList()
   },
   methods: {
+    initApp () {
+      this.initChart()
+      this.initDistrict()
+      this.setDate()
+      this.getAreaFlowAndWarningList()
+      this.getPositionInfoList()
+    },
     /**
      * 初始化行政区
      */
@@ -398,7 +443,10 @@ export default {
           // 更新地图视野
           window.theMap.setBounds(areaNode.getBounds(), null, null, true)
           if (window.mapStatus === 2) {
-            window.theMap.setZoom(9.5) // todo 不同城市同一缩放级别有显示问题
+            window.theMap.setZoom(10.2) // todo 不同城市同一缩放级别有显示问题
+          }
+          if (window.mapStatus === 1) {
+            window.theMap.setZoom(7.5) // 广东省放大等级
           }
           // 清除已有的绘制内容
           districtExplorer.clearFeaturePolygons()
@@ -576,7 +624,7 @@ export default {
         features: this.defaultFeatures,
         zoom: 7.5,
         expandZoomRange: true, // 改变最大缩放等级
-        zooms: [7.5, 20], // 改变最大缩放等级
+        zooms: [4.5, 20], // 改变最大缩放等级
         keyboardEnable: false,
         layers: [
           //satellite,
@@ -590,6 +638,7 @@ export default {
     },
     initChart () {
       var me = this
+      debugger
       this.chartMap = window.echarts.init(this.$refs.chartMap)
       this.chartMap.setOption({
         backgroundColor: '',
@@ -626,17 +675,20 @@ export default {
         animation: false,
         series: []
       })
+      debugger
+
       window.theMap = this.chartMap.getModel().getComponent('amap').getAMap()
+
       window.theMap.setFeatures(this.defaultFeatures)
-      var layer = this.chartMap.getModel().getComponent('amap').getLayer()
       window.pointControl = new PlacePointView(window.theMap)
       window.traffic = new TrafficView(window.theMap)
-      layer.render = function () {
-        var theOptions = me.chartMap.getOption()
-        me.chartMap.setOption({
-          series: theOptions.series
-        })
-      }
+//      var layer = this.chartMap.getModel().getComponent('amap').getLayer()
+//      layer.render = function () {
+//        var theOptions = me.chartMap.getOption()
+//        me.chartMap.setOption({
+//          series: theOptions.series
+//        })
+//      }
     },
     /**
      * 设置背景的高度
@@ -683,7 +735,8 @@ export default {
         '轻度预警': require('../assets/枢纽点_轻度_正常.png'),
         '中度预警': require('../assets/枢纽点_中度_正常.png'),
         '重度预警': require('../assets/枢纽点_重度_正常.png'),
-        '舒适': '' // todo 没有图片
+//        '舒适': '', // todo 没有图片
+        '舒适': require('../assets/枢纽点_轻度_正常.png')
       }
       let thePoint = document.createElement('div')
       let infoDiv = document.createElement('div')
@@ -1129,7 +1182,7 @@ export default {
       this.showLaiyuan = bool
     },
     /*根据名字得到经纬度**/
-    geoCoordMap (name) {
+    geoCoordMap (name) { // todo 获取省的经纬度
 //      if (this.areaMod === 1) {
 //        let theCityCode = CityCodeMap.getCountyCode('广东省', this.cityName, name)
 //        //debugger;
@@ -1138,8 +1191,16 @@ export default {
 //      else {
 //        return GpsUtil.getByCityName(name)
 //      }
-      return GpsUtil.getByCityName(name)
-
+//      return GpsUtil.getByCityName(name)
+      let theCItyCOde = CityCodeMap.getProvinceCode(name)
+      if (!theCItyCOde) {
+        theCItyCOde = CityCodeMap.getCountyCode('广东省', this.cityName, name)
+      }
+      if(theCItyCOde) {
+        return GpsUtil.getByAreaCode(theCItyCOde)
+      } else {
+        return GpsUtil.getByCityName(name)
+      }
     },
     /**根据名称转换经纬度*/
     convertData (data) {
@@ -1368,13 +1429,14 @@ export default {
      * @param dataobj
      */
     drawLine (dataobj) {
-//      debugger
+      debugger
       this.lineData = dataobj
       this.scope = dataobj.scope // 1:省内 2:省外 3:境外
       if (this.scope === '1') {
         this.switch2AreaNode(440000)
       } else if (this.scope === '2') {
         this.switch2AreaNode(100000)
+        this.setTheCenter()
       } else {
 
       }
@@ -1385,6 +1447,8 @@ export default {
      */
     drawLineCB () {
       window.mapbase.removeReli() // 去除热力
+    },
+    setTheCenter () {
       let theCenter = [117.474401, 38.741769] // 设置中心
       window.theMap.setCenter(theCenter)
     }
@@ -1403,7 +1467,7 @@ export default {
     position: relative;
     z-index: 10;
   }
-  .mapview {
+  .mapview, .container {
     width: 100%;
     height: 100%;
     position: absolute;

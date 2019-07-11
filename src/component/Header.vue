@@ -44,10 +44,15 @@
       </div>
       <div class="right-box">
         <div class="right1">
-          <div class="r-btn cp"></div>
+          <div class="r-btn cp" @click="doFullScreen"></div>
         </div>
-        <div class="right2" @click="gotoLogin">
-          <div class="people"></div>
+        <div class="right2">
+          <div class="people" @click="gotoLogin"></div>
+          <div class="menu_div" v-if="menuVisible">
+            <div class="username">{{userName}}</div>
+            <div class="exit_btn" @click="gotoAdmin">后台管理</div>
+            <div class="exit_btn" @click="logout">注销</div>
+          </div>
         </div>
       </div>
     </div>
@@ -56,6 +61,7 @@
 
 <script>
 import {utils} from '../common'
+import axios from "axios"
 
 export default {
   data () {
@@ -72,7 +78,10 @@ export default {
       jiance_text: "",
       guihua_text: "",
       fenxi_text: "",
-      appname:''
+      appname:'',
+      userName: '',
+      menuVisible: false,
+      isFullScreen: false
     }
   },
 
@@ -88,6 +97,95 @@ export default {
 //    }
   },
   methods: {
+    gotoLogin() {
+      // location.href=window.adminUrl;
+      // window.gotoPage('login.html');
+      this.menuVisible = !this.menuVisible;
+    },
+    gotoAdmin() {
+      location.href = window.adminUrl;
+    },
+    isFullscreen() {
+      return document.fullscreen ||
+        document.mozFullScreen ||
+        document.webkitIsFullScreen || false;
+    },
+    doExitFullScreen() {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+        return;
+      }
+      //兼容火狐
+      console.log(document.mozExitFullscreen)
+      if (document.mozExitFullscreen) {
+        document.mozExitFullscreen();
+        return;
+      }
+      //兼容谷歌等可以webkitRequestFullScreen也可以webkitRequestFullscreen
+      if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+        return;
+      }
+      //兼容IE,只能写msRequestFullscreen
+      if (document.msExitFullscreen) {
+        document.msExitFullscreen();
+        return;
+      }
+    },
+    doFullScreen() {
+      if (this.isFullscreen()) {
+        this.doExitFullScreen();
+        return;
+      }
+      if (document.documentElement.RequestFullScreen) {
+        document.documentElement.RequestFullScreen();
+        return;
+      }
+      //兼容火狐
+      console.log(document.documentElement.mozRequestFullScreen)
+      if (document.documentElement.mozRequestFullScreen) {
+        document.documentElement.mozRequestFullScreen();
+        return;
+      }
+      //兼容谷歌等可以webkitRequestFullScreen也可以webkitRequestFullscreen
+      if (document.documentElement.webkitRequestFullScreen) {
+        document.documentElement.webkitRequestFullScreen();
+        return;
+      }
+      //兼容IE,只能写msRequestFullscreen
+      if (document.documentElement.msRequestFullscreen) {
+        document.documentElement.msRequestFullscreen();
+        return;
+      }
+    },
+    logout() {
+      var theUrl1 = "/logout";
+      //近期热门迁徙路线
+      var theUrl = window.baseUrl + theUrl1;
+      var theQueryObj = {};
+      var me = this;
+      axios.post(theUrl, window.toQuery(theQueryObj))
+        .then(function (response) {
+          var res = response.data;
+          if (res.code == 200) {
+
+          }
+          else {
+            alert(res.message);
+          }
+        })
+        .catch(function (error) {
+          // handle error
+//          alert("登出失败");
+          console.log(error);
+        })
+        .finally(function () {
+          // always executed
+
+        });
+      doLogoff();
+      location.href = "login.html";
+    },
     loadPriv() {
       var theMenuList = window.menuList;
       if (theMenuList && theMenuList.length > 0) {
@@ -121,9 +219,7 @@ export default {
         window.GotoPage('qxdc.html')
       }
     },
-    gotoLogin(){
-      window.GotoPage('login.html')
-    },
+
     /**
      * 发送高度
      */
@@ -163,7 +259,7 @@ export default {
       window.moduleNmae=this.fenxi_text;// "跨市迁徙分析";
     }
     this.appname=window.appname;
-
+    this.userName = getLoginName();
   },
 
   beforeDestroy () {
@@ -173,6 +269,29 @@ export default {
 </script>
 
 <style lang='scss' scoped>
+  .exit_btn {
+    margin-top: 10px;
+    cursor: pointer;
+    padding-top: 5px;
+  }
+
+  .exit_btn:hover {
+    background: #c3c3c3;
+  }
+
+  .menu_div {
+    position: absolute;
+    bottom: 0px;
+    right: 10px;
+    background: white;
+    /*opacity: 80%;*/
+    width: 100px;
+    top: 80px;
+    padding: 10px;
+    height: 100px;
+    font-size: 20px;
+
+  }
   .header {
     width: 100%;
     height: 78px;
@@ -283,5 +402,35 @@ export default {
   .header-box {
     position: relative;
     z-index: 1100;
+  }
+  .username{
+    border-bottom: white dotted 2px;
+    padding-bottom: 5px;
+  }
+  .exit_btn {
+    margin-top: 10px;
+    cursor: pointer;
+    padding-top: 4px;
+  }
+
+  .exit_btn:hover {
+    background: #c3c3c3;
+  }
+
+  .menu_div {
+    position: absolute;
+    bottom: 0px;
+    right: 10px;
+    background: white;
+    opacity: 80%;
+    width: 200px;
+    top: 80px;
+    padding: 10px;
+    height: 140px;
+    color: white;
+    font-size: 25px;
+    background: #418edd;
+    z-index: 99999;
+    border-radius: 10px;
   }
 </style>

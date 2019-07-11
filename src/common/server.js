@@ -16,7 +16,7 @@ if (process.env.NODE_ENV === 'development') {
 
 const Axios = axios.create({
   baseURL: ROOT,
-  timeout: 10000
+  timeout: 100000
   // responseType: "json",
   // withCredentials: true, // 是否允许带cookie这些
   // headers: {
@@ -58,24 +58,24 @@ Axios.interceptors.request.use(
 Axios.interceptors.response.use(
   res => {
     // 对响应数据做些事
-    if (res.data.code !== 200) {
-      Message({
-        //  饿了么的消息弹窗组件,类似toast
-        showClose: true,
-        message: res.data.message,
-        type: 'error'
-      })
-      return Promise.reject(res.data.message) // 返回promise对象,把错误信息传下去
-    }
+    // if (res.data.code !== 200) {
+    //   Message({
+    //     //  饿了么的消息弹窗组件,类似toast
+    //     showClose: true,
+    //     message: res.data.message,
+    //     type: 'error'
+    //   })
+    //   return Promise.reject(res.data.message) // 返回promise对象,把错误信息传下去
+    // }
     return res
   },
   error => {
-    Message({
-      //  饿了么的消息弹窗组件,类似toast
-      showClose: true,
-      message: '请求出错',
-      type: 'error'
-    })
+    // Message({
+    //   //  饿了么的消息弹窗组件,类似toast
+    //   showClose: true,
+    //   message: '请求出错',
+    //   type: 'error'
+    // })
 
     // 下面是接口回调的status
 

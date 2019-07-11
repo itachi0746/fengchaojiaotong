@@ -185,6 +185,13 @@ export default {
             }
           }
         },
+        grid: {
+          left: '10%',
+          right: '10%',
+          bottom: '10%',
+          top: '10%',
+          containLabel: true
+        },
         xAxis: {
           type: 'category',
           boundaryGap: false,
@@ -306,6 +313,13 @@ export default {
             fontSize: 15,
             fontFamily: 'Microsoft YaHei'
           }
+        },
+        grid: {
+          left: '10%',
+          right: '10%',
+          bottom: '10%',
+          top: '10%',
+          containLabel: true
         },
         xAxis: {
           type: 'category',

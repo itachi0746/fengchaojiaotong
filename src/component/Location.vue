@@ -47,8 +47,10 @@ export default {
       } else if (newVal === 2) {
         this.posList = this.getCityHinge()
         try {
-          let theName = getDefaultCity()
-          this.theLocation = {name: theName, adcode: ''}
+//          debugger
+
+//          let theName = getDefaultCity()
+//          this.theLocation = {name: theName, adcode: ''}
         } catch (err) {
           console.log(err)
         }
@@ -72,6 +74,7 @@ export default {
      * @param adcode 行政号
      */
     clickLi (name, adcode) {
+      debugger
       this.theLocation = {name: name, adcode: adcode}
       this.showList = false
       this.$emit('changeLocation', this.theLocation)
